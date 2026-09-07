@@ -1,0 +1,27 @@
+appId: dev.otherworld.sshit
+productName: SSHIT
+directories:
+  output: dist
+  buildResources: build
+files:
+  - out/**
+  - package.json
+  # node-pty ships prebuilt binaries for every platform; keep only win32-x64 and drop symbols/sources.
+  - "!node_modules/node-pty/prebuilds/**/*.pdb"
+  - "!node_modules/node-pty/prebuilds/win32-arm64/**"
+  - "!node_modules/node-pty/prebuilds/darwin-*/**"
+  - "!node_modules/node-pty/deps/**"
+  - "!node_modules/node-pty/third_party/**"
+asar: true
+# pty.node and the ConPTY helpers must be real files on disk, not inside the asar.
+asarUnpack:
+  - node_modules/node-pty/**
+# node-pty 1.1.0 is N-API with prebuilds; never run @electron/rebuild.
+npmRebuild: false
+win:
+  target:
+    - dir
+    - nsis
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true

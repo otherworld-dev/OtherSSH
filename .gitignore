@@ -1,0 +1,12 @@
+node_modules/
+out/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+dist-*/
+
+# Claude Code
+.claude/
+CLAUDE.md
+.claudeignore

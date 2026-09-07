@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:"
+    />
+    <title>SSHIT</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div id="app">
+      <aside id="sidebar">
+        <div class="sidebar-head">
+          <input id="filter" type="search" placeholder="Filter sessions" spellcheck="false" autocomplete="off" />
+        </div>
+        <ul id="profiles" role="listbox" tabindex="0" aria-label="Saved sessions"></ul>
+        <div class="sidebar-actions">
+          <button id="btn-connect" class="primary" disabled>Connect</button>
+          <button id="btn-new">New</button>
+          <button id="btn-edit" disabled>Edit</button>
+          <button id="btn-delete" disabled>Delete</button>
+        </div>
+        <div class="sidebar-foot">
+          <button id="btn-import" class="ghost" title="Add a session for each Host alias in ~/.ssh/config">Import ssh config</button>
+          <button id="btn-settings" class="ghost">Settings</button>
+        </div>
+      </aside>
+
+      <main id="main">
+        <div id="tabbar">
+          <button id="btn-sidebar" class="icon" title="Toggle sidebar (Ctrl+Shift+B)" aria-label="Toggle sidebar">&#9776;</button>
+          <div id="tabs" role="tablist"></div>
+        </div>
+        <div id="terminals">
+          <div id="empty" class="empty">
+            <p class="empty-title">No open sessions</p>
+            <p>Pick a session on the left and press Connect, or double-click it.</p>
+            <p>Or type <code>user@host</code> in the filter box and press Enter for a one-off connection.</p>
+            <p class="hint">
+              Ctrl+Shift+C / Ctrl+Shift+V or right-click to copy and paste &nbsp;&middot;&nbsp; Ctrl+Tab switch tabs &nbsp;&middot;&nbsp;
+              Ctrl+Shift+W close tab &nbsp;&middot;&nbsp; Ctrl+Shift+B sidebar &nbsp;&middot;&nbsp; Ctrl+wheel zoom &nbsp;&middot;&nbsp;
+              Ctrl+click opens links &nbsp;&middot;&nbsp; right-click a tab to move it
+            </p>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <dialog id="profile-dialog">
+      <form id="profile-form" method="dialog" novalidate>
+        <h2 id="pf-title">New session</h2>
+        <label class="field"><span>Name</span><input id="pf-name" type="text" placeholder="Optional, defaults to user@host" spellcheck="false" /></label>
+        <label class="field"><span>Group</span><input id="pf-group" type="text" list="pf-groups" placeholder="Optional, e.g. Work" spellcheck="false" autocomplete="off" /></label>
+        <datalist id="pf-groups"></datalist>
+        <label class="field"><span>Host</span><input id="pf-host" type="text" placeholder="hostname or ~/.ssh/config alias" spellcheck="false" /></label>
+        <label class="field"><span>User</span><input id="pf-user" type="text" spellcheck="false" /></label>
+        <label class="field"><span>Port</span><input id="pf-port" type="number" min="1" max="65535" placeholder="22" /></label>
+        <div class="field">
+          <label for="pf-identity">Key file</label>
+          <input id="pf-identity" type="text" placeholder="Optional, blank = agent / config" spellcheck="false" />
+          <button type="button" id="pf-browse">Browse&hellip;</button>
+        </div>
+        <label class="field"><span>Extra args</span><input id="pf-extra" type="text" placeholder="e.g. -o ServerAliveInterval=30" spellcheck="false" /></label>
+        <p id="pf-error" class="error" hidden></p>
+        <div class="actions">
+          <button type="button" id="pf-cancel">Cancel</button>
+          <span class="spacer"></span>
+          <button type="submit" value="save">Save</button>
+          <button type="submit" value="connect" class="primary">Save &amp; Connect</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog id="settings-dialog">
+      <form id="settings-form" method="dialog" novalidate>
+        <h2>Settings</h2>
+        <div class="field">
+          <label for="st-ssh">ssh binary</label>
+          <input id="st-ssh" type="text" placeholder="Auto (System32 OpenSSH preferred)" spellcheck="false" />
+          <button type="button" id="st-browse">Browse&hellip;</button>
+        </div>
+        <div class="field"><span>Resolved</span><code id="st-resolved" class="resolved"></code></div>
+        <label class="field"><span>Font</span><input id="st-font" type="text" spellcheck="false" /></label>
+        <label class="field"><span>Font size</span><input id="st-size" type="number" min="6" max="72" /></label>
+        <label class="field"><span>Scrollback</span><input id="st-scrollback" type="number" min="0" max="1000000" step="100" /></label>
+        <div class="actions">
+          <button type="button" id="st-cancel">Cancel</button>
+          <span class="spacer"></span>
+          <button type="submit" class="primary">Save</button>
+        </div>
+      </form>
+    </dialog>
+
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>
