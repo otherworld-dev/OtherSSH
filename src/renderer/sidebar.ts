@@ -25,7 +25,7 @@ export interface SidebarHooks {
   onSettings(): void;
 }
 
-const COLLAPSED_KEY = 'sshit.collapsedGroups';
+const COLLAPSED_KEY = 'otherssh.collapsedGroups';
 
 export class Sidebar {
   private profiles: SessionProfile[] = [];

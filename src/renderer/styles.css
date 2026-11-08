@@ -1,14 +1,17 @@
 :root {
-  --bg: #14161a;
-  --bg-panel: #1b1e24;
-  --bg-hover: #23272f;
-  --bg-active: #2b3040;
-  --border: #2a2f38;
-  --fg: #d6d9de;
-  --fg-dim: #8b929e;
-  --accent: #5b9cf5;
-  --danger: #e06c75;
-  --ok: #98c379;
+  /* Otherworld "Other family" palette: night, teal, glow, paper. */
+  --bg: #0a0f16;
+  --bg-panel: #0f1720;
+  --bg-hover: #162230;
+  --bg-active: #1c2c3a;
+  --border: #1c2733;
+  --fg: #f2efe6;
+  --fg-dim: #8a97a3;
+  --accent: #22d3c4;
+  --accent-hover: #5eead4;
+  --on-accent: #0a1118;
+  --danger: #f28b82;
+  --ok: #5eead4;
   --font-ui: system-ui, "Segoe UI", sans-serif;
 }
 
@@ -260,7 +263,7 @@ body.sidebar-collapsed #sidebar {
 
 .tab.activity .dot {
   background: var(--accent);
-  box-shadow: 0 0 0 2px rgba(91, 156, 245, 0.25);
+  box-shadow: 0 0 0 2px rgba(34, 211, 196, 0.25);
 }
 
 .empty code {
@@ -325,6 +328,126 @@ body.sidebar-collapsed #sidebar {
   scrollbar-color: var(--bg-active) transparent;
 }
 
+/* ---- drag-and-drop uploads ------------------------------------------------- */
+
+.term-host.drop-target::after {
+  content: attr(data-drop-label);
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px dashed var(--accent);
+  border-radius: 6px;
+  background: rgba(10, 15, 22, 0.78);
+  color: var(--accent-hover);
+  font: 600 15px var(--font-ui);
+  pointer-events: none;
+}
+
+.drop-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 8px;
+  z-index: 11;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+  background: var(--bg-panel);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+  font: 13px var(--font-ui);
+}
+
+.drop-bar input {
+  flex: 1 1 220px;
+  font-family: ui-monospace, Consolas, monospace;
+}
+
+#toasts {
+  position: absolute;
+  right: 14px;
+  bottom: 14px;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  max-width: min(520px, calc(100% - 28px));
+  pointer-events: none;
+}
+
+.toast {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 6px 8px 12px;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--fg-dim);
+  border-radius: 6px;
+  background: var(--bg-panel);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+  pointer-events: auto;
+}
+
+.toast.busy {
+  border-left-color: var(--accent);
+}
+
+.toast.ok {
+  border-left-color: var(--ok);
+}
+
+.toast.info {
+  border-left-color: var(--accent-hover);
+}
+
+.toast.error {
+  border-left-color: var(--danger);
+}
+
+.toast-text {
+  flex: 1 1 200px;
+}
+
+.toast.busy .toast-text::before {
+  content: "";
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  margin-right: 8px;
+  border: 2px solid var(--accent);
+  border-right-color: transparent;
+  border-radius: 50%;
+  vertical-align: -1px;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.toast-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.toast button.icon {
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  border-radius: 4px;
+}
+
 .empty {
   position: absolute;
   inset: 0;
@@ -341,6 +464,26 @@ body.sidebar-collapsed #sidebar {
 
 .empty p {
   margin: 0;
+}
+
+.empty-gwyn {
+  width: 96px;
+  height: auto;
+  margin-bottom: 6px;
+  filter: drop-shadow(0 12px 28px rgba(34, 211, 196, 0.12));
+}
+
+.wordmark {
+  margin-bottom: 14px;
+  font-size: 26px;
+  font-weight: 300;
+  letter-spacing: -0.01em;
+  color: var(--fg);
+}
+
+.wordmark b {
+  font-weight: 700;
+  color: var(--accent);
 }
 
 .empty-title {
@@ -376,11 +519,13 @@ button:disabled {
 button.primary {
   background: var(--accent);
   border-color: var(--accent);
-  color: #fff;
+  color: var(--on-accent);
+  font-weight: 600;
 }
 
 button.primary:hover:not(:disabled) {
-  background: #6ea8f7;
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
 }
 
 button.ghost {
@@ -478,6 +623,34 @@ dialog h2 {
 .error {
   margin: 4px 0 10px;
   color: var(--danger);
+}
+
+dialog h3.section {
+  margin: 18px 0 10px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+select {
+  min-width: 0;
+  padding: 5px 8px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg);
+  color: inherit;
+  font: inherit;
+}
+
+.update-status {
+  color: var(--fg);
+  font-size: 12px;
+}
+
+.update-actions {
+  display: flex;
+  gap: 8px;
 }
 
 .actions {

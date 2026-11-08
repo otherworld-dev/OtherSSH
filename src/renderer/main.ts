@@ -1,12 +1,13 @@
-import type { Adoption, QuickTarget, SessionProfile } from '../shared/types';
+import type { Adoption, QuickTarget, SessionProfile, UpdateNotice } from '../shared/types';
 import { isLocalProcessTitle } from '../shared/titles';
 import { ProfileForm } from './profile-form';
 import { SettingsForm } from './settings-form';
 import { describeTarget, Sidebar } from './sidebar';
 import { TabBar, type Tab } from './tabs';
 import { matchShortcut, TerminalView, type Shortcut } from './terminal-view';
+import { askForFolder, Toasts } from './transfer-ui';
 
-const api = window.sshit;
+const api = window.otherssh;
 
 function $<T extends HTMLElement>(selector: string): T {
   const el = document.querySelector<T>(selector);
@@ -59,8 +60,14 @@ async function boot(): Promise<void> {
   );
   sidebar.setProfiles(init.profiles);
 
+  const toasts = new Toasts($('#toasts'));
   const profileForm = new ProfileForm($('#profile-dialog'), api.browseForFile);
-  const settingsForm = new SettingsForm($('#settings-dialog'), api.browseForFile);
+  const settingsForm = new SettingsForm($('#settings-dialog'), api.browseForFile, {
+    status: () => api.getUpdateStatus(),
+    check: () => api.checkForUpdates(),
+    install: () => api.installUpdate(),
+    onStatus: (cb) => api.onUpdateStatus(cb),
+  });
 
   // ---- tabs and sessions -----------------------------------------------------
 
@@ -84,13 +91,15 @@ async function boot(): Promise<void> {
       readClipboard: () => api.readClipboard(),
       writeClipboard: (text) => api.writeClipboard(text),
       openExternal: (url) => api.openExternal(url),
+      onDropFiles: (files) => void handleDrop(tab, files),
     });
     tab = tabs.add(title, view);
     return tab;
   }
 
-  function bindSession(tab: Tab, sessionId: string, title?: string): void {
+  function bindSession(tab: Tab, sessionId: string, cwdToken: string, title?: string): void {
     tab.sessionId = sessionId;
+    tab.view.cwd.setToken(cwdToken);
     tab.el.dataset['sessionId'] = sessionId;
     if (title) tabs.setTitle(tab, title);
     const queued = pendingData.get(sessionId);
@@ -109,8 +118,8 @@ async function boot(): Promise<void> {
   async function connect(profile: SessionProfile): Promise<void> {
     const tab = newTab(profile.name);
     try {
-      const { sessionId, title } = await api.openSession(profile.id, tab.view.cols, tab.view.rows);
-      bindSession(tab, sessionId, title);
+      const { sessionId, title, cwdToken } = await api.openSession(profile.id, tab.view.cols, tab.view.rows);
+      bindSession(tab, sessionId, cwdToken, title);
     } catch (err) {
       failTab(tab, err, false);
     }
@@ -119,8 +128,8 @@ async function boot(): Promise<void> {
   async function quickConnect(target: QuickTarget): Promise<void> {
     const tab = newTab(describeTarget(target));
     try {
-      const { sessionId, title } = await api.openQuickSession(target, tab.view.cols, tab.view.rows);
-      bindSession(tab, sessionId, title);
+      const { sessionId, title, cwdToken } = await api.openQuickSession(target, tab.view.cols, tab.view.rows);
+      bindSession(tab, sessionId, cwdToken, title);
     } catch (err) {
       failTab(tab, err, false);
     }
@@ -130,9 +139,9 @@ async function boot(): Promise<void> {
     if (!tab.sessionId) return;
     tab.view.revive();
     try {
-      const { sessionId } = await api.reconnectSession(tab.sessionId, tab.view.cols, tab.view.rows);
+      const { sessionId, cwdToken } = await api.reconnectSession(tab.sessionId, tab.view.cols, tab.view.rows);
       tabs.setAlive(tab, true);
-      bindSession(tab, sessionId);
+      bindSession(tab, sessionId, cwdToken);
     } catch (err) {
       failTab(tab, err, true);
     }
@@ -177,6 +186,7 @@ async function boot(): Promise<void> {
     const tab = newTab(adoption.title);
     tab.sessionId = adoption.sessionId;
     tab.el.dataset['sessionId'] = adoption.sessionId;
+    tab.view.cwd.setToken(adoption.cwdToken);
     tab.view.write(adoption.serialized, () => {
       tab.view.fitNow();
       api
@@ -190,6 +200,129 @@ async function boot(): Promise<void> {
         .catch((err) => failTab(tab, err, false));
     });
   }
+
+  // ---- drag-and-drop uploads -------------------------------------------------
+
+  const stillLive = (tab: Tab, sessionId: string): boolean => tab.sessionId === sessionId && tab.alive;
+
+  async function handleDrop(tab: Tab, files: File[]): Promise<void> {
+    if (!tab.sessionId || !tab.alive) return;
+    const paths = files.map((f) => api.pathForFile(f)).filter(Boolean);
+    if (paths.length === 0) return;
+    const what = paths.length === 1 ? `"${paths[0]!.split(/[\\/]/).pop()}"` : `${paths.length} items`;
+
+    // Straight there when the shell told us where it is; otherwise check with a prefilled guess.
+    const guess = tab.view.cwd.current;
+    let dir = guess.path;
+    if (!guess.sure) {
+      const picked = await askForFolder(tab.view.element, {
+        what,
+        path: guess.path,
+        canTeach: !tab.view.cwd.taught,
+        onTeach: () => void teach(tab),
+      });
+      tab.view.focus();
+      if (picked === null) return;
+      dir = picked;
+    }
+    await upload(tab, paths, what, dir);
+  }
+
+  async function upload(tab: Tab, paths: string[], what: string, dir: string): Promise<void> {
+    const sessionId = tab.sessionId;
+    if (!sessionId) return;
+    const toast = toasts.show(`Uploading ${what} to ${dir}…`, 'busy');
+    try {
+      const result = await api.uploadFiles(sessionId, paths, dir);
+      if (result.kind === 'done') {
+        toast.update(`Sent ${what} to ${dir}`, 'ok');
+        return;
+      }
+      const typeIt = (): void => {
+        if (stillLive(tab, sessionId)) tab.view.paste(result.command);
+      };
+      const parked = `${dir} needs sudo, so ${what} is waiting in your home folder.`;
+      if (tab.view.cwd.current.sure) {
+        // At a prompt: put the sudo mv on the command line, unsent, for them to check and run.
+        typeIt();
+        toast.update(`${parked} Press Enter in the terminal to move it.`, 'info');
+      } else {
+        // Something else may have the terminal (vim, a REPL), so let them choose when to type it.
+        toast.update(parked, 'info', [
+          { label: 'Type the sudo command', run: typeIt },
+          { label: 'Copy it', run: () => api.writeClipboard(result.command) },
+        ]);
+      }
+    } catch (err) {
+      toast.update(`Upload failed: ${errorMessage(err)}`, 'error');
+    }
+  }
+
+  async function teach(tab: Tab): Promise<void> {
+    const sessionId = tab.sessionId;
+    if (!sessionId || !tab.alive) return;
+    const toast = toasts.show(`Teaching ${tab.title} to report its folder…`, 'busy');
+    // Leading space keeps it out of bash history on the usual HISTCONTROL settings.
+    const reload = {
+      label: 'Load it in this shell',
+      run: () => {
+        if (stillLive(tab, sessionId)) api.writeSession(sessionId, ' source ~/.bashrc\r');
+        tab.view.focus();
+      },
+    };
+    try {
+      const result = await api.teachServer(sessionId);
+      switch (result.kind) {
+        case 'done':
+          toast.update('Done. New shells on this server report their folder, so drops go straight there.', 'info', [reload]);
+          break;
+        case 'already':
+          toast.update('This server is already set up. A shell started before that needs reloading.', 'info', [reload]);
+          break;
+        case 'unsupported':
+          toast.update(`Your login shell there is ${result.shell}; only bash can be set up automatically for now.`, 'error');
+          break;
+      }
+    } catch (err) {
+      toast.update(`Couldn't set it up: ${errorMessage(err)}`, 'error');
+    }
+  }
+
+  // ---- updates ---------------------------------------------------------------
+
+  const restartToUpdate = (): void => {
+    api.installUpdate().catch((err) => toasts.show(`Couldn't install the update: ${errorMessage(err)}`, 'error'));
+  };
+
+  function showUpdateNotice(notice: UpdateNotice): void {
+    switch (notice.kind) {
+      case 'ready':
+        toasts.show(`OtherSSH ${notice.version} is ready to install.`, 'info', [{ label: 'Restart to update', run: restartToUpdate }]);
+        break;
+      case 'nudge':
+        // Showing it already put the next one off three days, so "Later" only has to close it.
+        toasts.show('An OtherSSH update is ready. Restart now to finish installing it.', 'info', [
+          { label: 'Restart now', run: restartToUpdate },
+          { label: 'Later', run: () => undefined },
+        ]);
+        break;
+      case 'updated': {
+        const notes = notice.notes?.trim();
+        toasts.show(`OtherSSH was updated to ${notice.version}.${notes ? ` ${notes}` : ''}`, 'info');
+        break;
+      }
+      case 'message':
+        toasts.show(notice.text, notice.tone);
+        break;
+    }
+  }
+
+  // An update never installs over an open dialog or the upload question, which may hold unsaved input.
+  let modalOpen = false;
+  new MutationObserver(() => {
+    const open = document.querySelector('dialog[open], .drop-bar') !== null;
+    if (open !== modalOpen) api.reportModal((modalOpen = open));
+  }).observe(document.body, { subtree: true, childList: true, attributes: true, attributeFilter: ['open'] });
 
   // ---- sidebar actions -------------------------------------------------------
 
@@ -294,6 +427,7 @@ async function boot(): Promise<void> {
   });
 
   api.onAdoptSession(adopt);
+  api.onUpdateNotice(showUpdateNotice);
 
   api.onTabCommand((sessionId, cmd) => {
     const tab = tabs.bySession(sessionId);
@@ -301,6 +435,9 @@ async function boot(): Promise<void> {
     switch (cmd.kind) {
       case 'close':
         void closeTab(tab);
+        break;
+      case 'teach':
+        void teach(tab);
         break;
       case 'moveToNewWindow':
         void moveTab(tab, { kind: 'new' });
@@ -340,6 +477,7 @@ async function boot(): Promise<void> {
   // ---- go --------------------------------------------------------------------
 
   for (const adoption of init.adoptions) adopt(adoption);
+  for (const notice of init.updateNotices) showUpdateNotice(notice);
   if (tabs.count === 0) sidebar.focusFilter();
 }
 

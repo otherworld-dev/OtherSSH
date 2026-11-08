@@ -3,6 +3,7 @@ import { FitAddon } from '@xterm/addon-fit';
 import { SerializeAddon } from '@xterm/addon-serialize';
 import { WebLinksAddon } from '@xterm/addon-web-links';
 import '@xterm/xterm/css/xterm.css';
+import { CwdTracker } from '../shared/cwd-tracker';
 import type { Settings } from '../shared/types';
 
 export type Shortcut = 'nextTab' | 'prevTab' | 'closeTab' | 'newTab' | 'toggleSidebar';
@@ -33,32 +34,34 @@ export interface TerminalViewHooks {
   writeClipboard(text: string): void;
   /** Ctrl+click on a URL. */
   openExternal(url: string): void;
+  /** Files or folders dragged in from Explorer and dropped on the terminal. */
+  onDropFiles(files: File[]): void;
 }
 
 const MIN_FONT = 6;
 const MAX_FONT = 40;
 
 const THEME: ITheme = {
-  background: '#14161a',
-  foreground: '#d6d9de',
-  cursor: '#e6e6e6',
-  cursorAccent: '#14161a',
-  selectionBackground: '#3a4a6a',
-  black: '#1e2126',
+  background: '#0a0f16',
+  foreground: '#e4e2da',
+  cursor: '#22d3c4',
+  cursorAccent: '#0a0f16',
+  selectionBackground: '#1d4a4c',
+  black: '#162230',
   red: '#e06c75',
   green: '#98c379',
   yellow: '#e5c07b',
   blue: '#61afef',
   magenta: '#c678dd',
-  cyan: '#56b6c2',
+  cyan: '#22d3c4',
   white: '#abb2bf',
-  brightBlack: '#5c6370',
+  brightBlack: '#5b6670',
   brightRed: '#e06c75',
   brightGreen: '#98c379',
   brightYellow: '#e5c07b',
   brightBlue: '#61afef',
   brightMagenta: '#c678dd',
-  brightCyan: '#56b6c2',
+  brightCyan: '#5eead4',
   brightWhite: '#ffffff',
 };
 
@@ -66,6 +69,8 @@ const THEME: ITheme = {
 export class TerminalView {
   readonly element = document.createElement('div');
   readonly term: Terminal;
+  /** The remote shell's directory, as far as its output tells us; drives where drops go. */
+  readonly cwd = new CwdTracker();
   private readonly fit = new FitAddon();
   private readonly serializer = new SerializeAddon();
   private opened = false;
@@ -107,7 +112,15 @@ export class TerminalView {
     );
     this.term.onData((data) => this.handleInput(data));
     this.term.onResize(({ cols, rows }) => hooks.onResize(cols, rows));
-    this.term.onTitleChange((title) => hooks.onTitle(title));
+    this.term.onTitleChange((title) => {
+      this.cwd.title(title);
+      hooks.onTitle(title);
+    });
+    this.term.parser.registerOscHandler(7, (payload) => {
+      this.cwd.report(payload);
+      return true;
+    });
+    this.listenForDrops();
   }
 
   mount(container: HTMLElement): void {
@@ -164,7 +177,14 @@ export class TerminalView {
 
   revive(): void {
     this.dead = false;
+    this.cwd.reset();
     this.term.reset();
+  }
+
+  /** Send text to the shell as if pasted: bracketed when the shell asked for it, so nothing runs by itself. */
+  paste(text: string): void {
+    this.term.paste(text);
+    this.term.focus();
   }
 
   applySettings(settings: Settings): void {
@@ -211,8 +231,38 @@ export class TerminalView {
     this.element.remove();
   }
 
+  private listenForDrops(): void {
+    const carriesFiles = (ev: DragEvent): boolean => !!ev.dataTransfer?.types.includes('Files');
+    let depth = 0; // dragenter/leave fire for every child element crossed
+    this.element.addEventListener('dragenter', (ev) => {
+      if (!carriesFiles(ev) || this.dead) return;
+      ev.preventDefault();
+      if (depth++ > 0) return;
+      const { path, sure } = this.cwd.current;
+      this.element.dataset['dropLabel'] = sure ? `Drop to upload to ${path}` : 'Drop to upload (you can check the folder first)';
+      this.element.classList.add('drop-target');
+    });
+    this.element.addEventListener('dragover', (ev) => {
+      if (!carriesFiles(ev) || this.dead) return;
+      ev.preventDefault();
+      ev.dataTransfer!.dropEffect = 'copy';
+    });
+    this.element.addEventListener('dragleave', () => {
+      if (depth > 0 && --depth === 0) this.element.classList.remove('drop-target');
+    });
+    this.element.addEventListener('drop', (ev) => {
+      depth = 0;
+      this.element.classList.remove('drop-target');
+      if (!carriesFiles(ev) || this.dead) return;
+      ev.preventDefault();
+      const files = [...(ev.dataTransfer?.files ?? [])];
+      if (files.length) this.hooks.onDropFiles(files);
+    });
+  }
+
   private handleInput(data: string): void {
     if (!this.dead) {
+      this.cwd.input(data);
       this.hooks.onInput(data);
       return;
     }

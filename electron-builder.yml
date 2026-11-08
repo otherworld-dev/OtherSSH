@@ -1,5 +1,5 @@
-appId: dev.otherworld.sshit
-productName: SSHIT
+appId: dev.otherworld.otherssh
+productName: OtherSSH
 directories:
   output: dist
   buildResources: build
@@ -25,3 +25,5 @@ win:
 nsis:
   oneClick: false
   allowToChangeInstallationDirectory: true
+  # The auto-updater's installer name, matching OtherLook's: OtherSSH_<version>_x64-setup.exe
+  artifactName: ${productName}_${version}_x64-setup.${ext}

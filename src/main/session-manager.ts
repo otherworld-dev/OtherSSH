@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import type { AttachResult, OpenResult } from '../shared/types';
+import type { AttachResult, OpenResult, SessionProfile } from '../shared/types';
 
 /** The slice of node-pty's IPty we use; injected so the manager is testable without a real pty. */
 export interface PtyLike {
@@ -19,6 +19,10 @@ export interface SpawnRequest {
   rows: number;
   /** webContents id of the window that will display the session. */
   ownerWc: number;
+  /** What the session connected with; uploads reuse it to reach the same server. */
+  profile?: SessionProfile;
+  /** Handed to the server in the ssh args; the renderer trusts folder reports that carry it. */
+  cwdToken?: string;
 }
 
 export interface SessionManagerDeps {
@@ -36,11 +40,15 @@ export interface SessionInfo {
   alive: boolean;
   exitCode: number | undefined;
   ownerWc: number | null;
+  profile: SessionProfile | undefined;
+  cwdToken: string;
 }
 
 interface SessionRecord {
   id: string;
   profileId: string;
+  profile: SessionProfile | undefined;
+  cwdToken: string;
   title: string;
   file: string;
   args: string[];
@@ -76,6 +84,8 @@ export class SessionManager {
     const record: SessionRecord = {
       id: randomUUID(),
       profileId: request.profileId,
+      profile: request.profile,
+      cwdToken: request.cwdToken ?? '',
       title: request.title,
       file: request.file,
       args: request.args,
@@ -94,7 +104,7 @@ export class SessionManager {
     };
     this.sessions.set(record.id, record);
     this.spawnInto(record, request.cols, request.rows, request.ownerWc);
-    return { sessionId: record.id, title: record.title };
+    return { sessionId: record.id, title: record.title, cwdToken: record.cwdToken };
   }
 
   reconnect(sessionId: string, cols: number, rows: number, fromWc: number): OpenResult {
@@ -103,7 +113,7 @@ export class SessionManager {
     if (record.ownerWc !== fromWc) throw new Error('Window does not own this session');
     this.disposeListeners(record);
     this.spawnInto(record, cols, rows, fromWc);
-    return { sessionId: record.id, title: record.title };
+    return { sessionId: record.id, title: record.title, cwdToken: record.cwdToken };
   }
 
   write(sessionId: string, data: string, fromWc: number): void {
@@ -182,6 +192,13 @@ export class SessionManager {
     }
   }
 
+  /** Live connections in every window, for the updater: it never restarts over one by itself. */
+  liveCount(): number {
+    let n = 0;
+    for (const r of this.sessions.values()) if (r.pty) n++;
+    return n;
+  }
+
   liveCountFor(wcId: number): number {
     let n = 0;
     for (const r of this.sessions.values()) if (r.ownerWc === wcId && r.pty) n++;
@@ -203,7 +220,7 @@ export class SessionManager {
   get(sessionId: string): SessionInfo | undefined {
     const r = this.sessions.get(sessionId);
     if (!r) return undefined;
-    return { sessionId: r.id, profileId: r.profileId, title: r.title, alive: r.pty !== null, exitCode: r.exitCode, ownerWc: r.ownerWc };
+    return { sessionId: r.id, profileId: r.profileId, title: r.title, alive: r.pty !== null, exitCode: r.exitCode, ownerWc: r.ownerWc, profile: r.profile, cwdToken: r.cwdToken };
   }
 
   ownerOf(sessionId: string): number | null {

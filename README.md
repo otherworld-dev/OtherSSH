@@ -1,7 +1,6 @@
-# SSHIT
+# OtherSSH
 
-**SSH Is This.** Correct. It runs the `ssh` that was already on your machine and
-puts a sidebar next to it.
+It runs the `ssh` that was already on your machine and puts a sidebar next to it.
 
 It remembers your sessions, uses the keys and agent you already have, keeps tabs
 that can be pulled into their own window, and does copy/paste without an
@@ -10,7 +9,7 @@ opinion. Anything not listed above was considered and declined.
 It does not implement SSH itself: it drives the OS OpenSSH client (`ssh.exe`)
 inside a real pseudo-terminal, so your `~/.ssh/config` aliases, `ssh-agent`,
 `known_hosts` prompts, key passphrases and `ProxyJump` all behave exactly as they
-do in a terminal. No credentials are ever stored by SSHIT.
+do in a terminal. No credentials are ever stored by OtherSSH.
 
 ## Features
 
@@ -33,6 +32,25 @@ do in a terminal. No credentials are ever stored by SSHIT.
 - **Import from `~/.ssh/config`** — one button adds a session for every `Host`
   alias you don't already have, filed under an "ssh config" group. The alias is
   used as the host, so ssh still reads the config itself.
+- **Drag and drop uploads** — drop files or folders from Explorer onto a
+  terminal and they're copied with the `scp` that sits next to `ssh.exe`, using
+  the same profile. If the shell has told OtherSSH which folder it's in, they go
+  straight there; otherwise a bar asks, prefilled with a best guess. Right-click
+  a tab and pick "Teach server to report its folder" to add a short prompt hook
+  to the server's `~/.bashrc` (OSC 7) so it stops asking. Each session hands the
+  server a random token (`LC_OTHERSSH_NONCE`, through ssh's `SetEnv`, merged
+  with any you already set). The hook moves it out of the environment as the
+  shell starts, so nothing run from that shell (a nested ssh included) can see
+  it, and only a report carrying it is trusted, so something printed in the
+  terminal can't redirect a drop. A server whose sshd
+  doesn't accept `LC_*` variables keeps asking. If the folder isn't writable
+  as you, the files wait in `~/.otherssh-upload` and a `sudo mv` is typed into
+  the terminal, unsent, for you to finish. Uploads need key or agent login; a
+  server that only takes a typed password will refuse them.
+- **Updates itself** — checks the Otherworld Services feed every few hours and
+  installs signed updates quietly when you close it, or while you're away with no
+  connections open. Settings has the mode (automatic, ask, or off), a beta
+  channel, and "Check for updates".
 - **Small comforts** — right-click a session for Connect / Edit / Duplicate /
   Delete; Ctrl+click opens URLs; Ctrl+wheel (or Ctrl+= / Ctrl+- / Ctrl+0) zooms
   one terminal; the window remembers its size and position.
@@ -53,7 +71,8 @@ do in a terminal. No credentials are ever stored by SSHIT.
 | `Ctrl+Shift+B` | Toggle the sidebar |
 | `Ctrl+wheel`, `Ctrl+=` / `Ctrl+-`, `Ctrl+0` | Zoom this terminal in / out / reset |
 | `Ctrl+click` on a URL | Open it in the browser |
-| Right-click a tab | Move to new / another window, or close |
+| Right-click a tab | Move to new / another window, teach the server its folder, or close |
+| Drop files on a terminal | Upload them to the shell's current folder |
 | Right-click a session | Connect, Edit, Duplicate, Delete |
 | Enter in the filter box | Connect to the first match, or to `user@host` typed there |
 | In a closed tab | `Enter` closes it, `r` reconnects |
@@ -72,6 +91,7 @@ npm run typecheck
 ```sh
 npm run dist:dir   # unpacked app in dist/win-unpacked (good for a quick check)
 npm run dist       # dir + NSIS installer
+npm run release    # signed installer + update manifest; see scripts/release/README.md
 ```
 
 `node-pty` is a native module. It is kept out of the Vite bundle
@@ -90,6 +110,4 @@ src/renderer/  vanilla-TS UI: sidebar, tabs, xterm terminals, dialogs
 ```
 
 The main process owns every ssh process; renderer windows are just views, which is
-what lets a live session move between windows. See
-`docs/superpowers/specs/2026-09-06-sshit-design.md` for the full design.
-```
+what lets a live session move between windows.

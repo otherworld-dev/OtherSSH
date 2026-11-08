@@ -6,7 +6,7 @@
       http-equiv="Content-Security-Policy"
       content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:"
     />
-    <title>SSHIT</title>
+    <title>OtherSSH</title>
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
@@ -35,15 +35,19 @@
         </div>
         <div id="terminals">
           <div id="empty" class="empty">
+            <img class="empty-gwyn" src="./assets/gwyn-peek.svg" alt="" />
+            <p class="wordmark">Other<b>SSH</b></p>
             <p class="empty-title">No open sessions</p>
             <p>Pick a session on the left and press Connect, or double-click it.</p>
             <p>Or type <code>user@host</code> in the filter box and press Enter for a one-off connection.</p>
             <p class="hint">
               Ctrl+Shift+C / Ctrl+Shift+V or right-click to copy and paste &nbsp;&middot;&nbsp; Ctrl+Tab switch tabs &nbsp;&middot;&nbsp;
               Ctrl+Shift+W close tab &nbsp;&middot;&nbsp; Ctrl+Shift+B sidebar &nbsp;&middot;&nbsp; Ctrl+wheel zoom &nbsp;&middot;&nbsp;
-              Ctrl+click opens links &nbsp;&middot;&nbsp; right-click a tab to move it
+              Ctrl+click opens links &nbsp;&middot;&nbsp; right-click a tab to move it &nbsp;&middot;&nbsp;
+              drop files on a terminal to upload them
             </p>
           </div>
+          <div id="toasts" aria-live="polite"></div>
         </div>
       </main>
     </div>
@@ -85,6 +89,33 @@
         <label class="field"><span>Font</span><input id="st-font" type="text" spellcheck="false" /></label>
         <label class="field"><span>Font size</span><input id="st-size" type="number" min="6" max="72" /></label>
         <label class="field"><span>Scrollback</span><input id="st-scrollback" type="number" min="0" max="1000000" step="100" /></label>
+        <h3 class="section">Updates</h3>
+        <label class="field"
+          ><span>Updates</span
+          ><select id="st-update-mode">
+            <option value="auto">Install automatically (recommended)</option>
+            <option value="ask">Download and ask me</option>
+            <option value="off">Don't check</option>
+          </select></label
+        >
+        <label class="field"
+          ><span>Channel</span
+          ><select id="st-update-channel">
+            <option value="stable">Stable</option>
+            <option value="beta">Beta</option>
+          </select></label
+        >
+        <div class="field">
+          <span id="st-update-version">Version</span>
+          <span id="st-update-status" class="update-status"></span>
+        </div>
+        <div class="field">
+          <span></span>
+          <span class="update-actions">
+            <button type="button" id="st-update-check">Check for updates</button>
+            <button type="button" id="st-update-install" class="primary" hidden>Restart now</button>
+          </span>
+        </div>
         <div class="actions">
           <button type="button" id="st-cancel">Cancel</button>
           <span class="spacer"></span>

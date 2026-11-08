@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="300" height="330" viewBox="0 0 300 330"><defs>
+  <radialGradient id="gwynBody" cx="0.4" cy="0.28" r="1.0">
+    <stop offset="0" stop-color="#FFFFFF"/><stop offset="0.62" stop-color="#F2EFE6"/><stop offset="1" stop-color="#CFD8D2"/>
+  </radialGradient>
+  <clipPath id="portalClip"><ellipse cx="0" cy="0" rx="99" ry="117"/></clipPath>
+</defs><g transform="translate(150 158)"><ellipse rx="104" ry="122" fill="#0A1118"/><circle cx="-30" cy="-64" r="2.4" fill="#33465C"/><circle cx="34" cy="-30" r="1.8" fill="#33465C"/><circle cx="-12" cy="-8" r="1.5" fill="#33465C"/><g clip-path="url(#portalClip)">
+      <circle cx="4" cy="102" r="88" fill="url(#gwynBody)"/>
+      <ellipse cx="-18" cy="52" rx="11" ry="15.5" fill="#0A1118"/>
+      <ellipse cx="28" cy="52" rx="11" ry="15.5" fill="#0A1118"/>
+      <circle cx="-14.3" cy="46" r="3.7" fill="#fff"/>
+      <circle cx="31.7" cy="46" r="3.7" fill="#fff"/><path d="M -2 76 Q 5 83 12 76" fill="none" stroke="#0A1118" stroke-width="5.2" stroke-linecap="round"/></g><path d="M 2 16 Q -2 -22 -30 -32" fill="none" stroke="#F2EFE6" stroke-width="6" stroke-linecap="round"/><circle cx="-34" cy="-34" r="13" fill="#5EEAD4" opacity="0.28"/><circle cx="-34" cy="-34" r="9" fill="#5EEAD4"/><ellipse rx="104" ry="122" fill="none" stroke="#5EEAD4" stroke-width="24" opacity="0.16"/><ellipse rx="104" ry="122" fill="none" stroke="#5EEAD4" stroke-width="10"/><ellipse cx="-58" cy="96" rx="16.5" ry="12.5" transform="rotate(30 -58 96)" fill="#F2EFE6" stroke="#0A1118" stroke-width="2.5"/><ellipse cx="66" cy="90" rx="16.5" ry="12.5" transform="rotate(-32 66 90)" fill="#F2EFE6" stroke="#0A1118" stroke-width="2.5"/></g></svg>

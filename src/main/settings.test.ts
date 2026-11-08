@@ -7,7 +7,7 @@ import { SettingsStore, DEFAULT_SETTINGS } from './settings';
 let dir: string;
 let file: string;
 beforeEach(async () => {
-  dir = await mkdtemp(join(tmpdir(), 'sshit-settings-'));
+  dir = await mkdtemp(join(tmpdir(), 'otherssh-settings-'));
   file = join(dir, 'settings.json');
 });
 afterEach(async () => {

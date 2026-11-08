@@ -8,7 +8,7 @@ import type { SessionProfile } from '../shared/types';
 let dir: string;
 let file: string;
 beforeEach(async () => {
-  dir = await mkdtemp(join(tmpdir(), 'sshit-sessions-'));
+  dir = await mkdtemp(join(tmpdir(), 'otherssh-sessions-'));
   file = join(dir, 'sessions.json');
 });
 afterEach(async () => {

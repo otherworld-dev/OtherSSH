@@ -9,16 +9,21 @@ import {
   type IpcMainInvokeEvent,
   type MenuItemConstructorOptions,
 } from 'electron';
-import { readFile } from 'node:fs/promises';
+import { execFile } from 'node:child_process';
+import { randomBytes } from 'node:crypto';
+import { readFile, stat } from 'node:fs/promises';
 import os from 'node:os';
-import { join } from 'node:path';
+import { isAbsolute, join } from 'node:path';
 import type { Adoption, ProfileCommand, QuickTarget, SessionProfile, Settings, TabCommand, WindowInitState } from '../shared/types';
+import { hasControlChars } from '../shared/cwd-tracker';
 import { sanitizeProfile } from '../shared/profile';
-import { buildSshArgs } from './ssh-args';
+import { buildSshArgs, parseSetenv, withCwdToken } from './ssh-args';
 import { importableHosts, parseSshConfigHosts, type SshConfigHost } from './ssh-config';
 import type { SessionManager } from './session-manager';
 import type { SessionStore } from './session-store';
 import type { SettingsStore } from './settings';
+import type { Transfers } from './transfer';
+import type { AppUpdater } from './updates/electron';
 import type { WindowManager } from './windows';
 
 export interface IpcContext {
@@ -26,6 +31,8 @@ export interface IpcContext {
   windows: WindowManager;
   profiles: SessionStore;
   settings: SettingsStore;
+  transfers: Transfers;
+  updates: AppUpdater;
   resolveSsh: () => string | null;
 }
 
@@ -60,7 +67,7 @@ export function registerIpc(ctx: IpcContext): void {
   const adoptionFor = (sessionId: string, serialized: string): Adoption => {
     const info = sessions.get(sessionId);
     if (!info) throw new Error(`Unknown session ${sessionId}`);
-    return { sessionId, title: info.title, serialized, alive: info.alive, exitCode: info.exitCode };
+    return { sessionId, title: info.title, serialized, alive: info.alive, exitCode: info.exitCode, cwdToken: info.cwdToken };
   };
 
   // ---- profiles / settings ----------------------------------------------------
@@ -149,17 +156,36 @@ export function registerIpc(ctx: IpcContext): void {
   });
 
   // ---- sessions ---------------------------------------------------------------
-  const spawnFor = (event: AnyEvent, profile: SessionProfile, cols: unknown, rows: unknown) => {
+  /**
+   * The profile's ssh argv with this session's folder-report token added as a
+   * SetEnv. `ssh -G` (which only reads config, never connects) supplies any
+   * SetEnv the user already has, since ssh would otherwise keep only ours.
+   * If that fails the session simply goes without a token: drops always ask.
+   */
+  const argsWithToken = async (file: string, profile: SessionProfile): Promise<{ args: string[]; cwdToken: string }> => {
+    const args = buildSshArgs(profile);
+    const config = await new Promise<string | null>((resolve) => {
+      execFile(file, ['-G', ...args], { windowsHide: true, timeout: 5000 }, (err, stdout) => resolve(err ? null : stdout));
+    });
+    if (config === null) return { args, cwdToken: '' };
+    const cwdToken = randomBytes(12).toString('hex');
+    return { args: withCwdToken(args, parseSetenv(config), cwdToken), cwdToken };
+  };
+
+  const spawnFor = async (event: AnyEvent, profile: SessionProfile, cols: unknown, rows: unknown) => {
     const file = ctx.resolveSsh();
     if (!file) throw new Error('No ssh binary found. Set one in Settings.');
+    const { args, cwdToken } = await argsWithToken(file, profile);
     return sessions.open({
       profileId: profile.id,
       title: profile.name,
       file,
-      args: buildSshArgs(profile),
+      args,
+      cwdToken,
       cols: dim(cols, 80),
       rows: dim(rows, 24),
       ownerWc: event.sender.id,
+      profile,
     });
   };
 
@@ -198,6 +224,51 @@ export function registerIpc(ctx: IpcContext): void {
     sessions.resize(sessionId, dim(cols, 80), dim(rows, 24), event.sender.id);
   });
 
+  // ---- file transfer ------------------------------------------------------------
+  const profileOf = (event: AnyEvent, sessionId: unknown): SessionProfile => {
+    if (typeof sessionId !== 'string') throw new Error('Bad session id');
+    requireOwner(event, sessionId);
+    const profile = sessions.get(sessionId)?.profile;
+    if (!profile) throw new Error('This tab has no connection details to upload with.');
+    return profile;
+  };
+
+  handle('transfer:upload', async (event, sessionId: unknown, localPaths: unknown, remoteDir: unknown) => {
+    const profile = profileOf(event, sessionId);
+    if (typeof remoteDir !== 'string') throw new Error('Bad remote folder');
+    if (!Array.isArray(localPaths) || localPaths.length === 0) throw new Error('Nothing to upload.');
+    const paths: string[] = [];
+    for (const p of localPaths) {
+      if (typeof p !== 'string' || !isAbsolute(p) || hasControlChars(p)) throw new Error('Bad local path');
+      await stat(p); // throws ENOENT for anything that vanished since the drop
+      paths.push(p);
+    }
+    return ctx.transfers.upload(profile, paths, remoteDir);
+  });
+
+  handle('transfer:teach', (event, sessionId: unknown) => ctx.transfers.teach(profileOf(event, sessionId)));
+
+  // ---- updates ------------------------------------------------------------------
+  const { updater } = ctx.updates;
+  handle('updates:status', () => updater.status);
+  handle('updates:check', () => updater.check(true));
+  handle('updates:install', async (event) => {
+    const live = sessions.liveCount();
+    const state = windows.get(event.sender.id);
+    if (live > 0 && state) {
+      const { response } = await dialog.showMessageBox(state.win, {
+        type: 'question',
+        buttons: ['Restart', 'Cancel'],
+        defaultId: 0,
+        cancelId: 1,
+        message: `Restarting to update closes ${live} open connection${live === 1 ? '' : 's'}.`,
+      });
+      if (response !== 0) return;
+    }
+    await updater.installNow();
+  });
+  on('updates:modal', (event, open: unknown) => windows.setModalOpen(event.sender.id, open === true));
+
   // ---- tear-off ---------------------------------------------------------------
   handle('session:detach', (event, sessionId: string) => sessions.detach(sessionId, event.sender.id));
 
@@ -234,6 +305,7 @@ export function registerIpc(ctx: IpcContext): void {
     resolvedSshPath: ctx.resolveSsh(),
     windowsBuildNumber: process.platform === 'win32' ? Number(os.release().split('.')[2]) || undefined : undefined,
     isPackaged: app.isPackaged,
+    updateNotices: ctx.updates.takeQueuedNotices(),
   }));
 
   handle('window:listOthers', (event) => windows.listOthers(event.sender.id));
@@ -255,10 +327,12 @@ export function registerIpc(ctx: IpcContext): void {
         label: 'Move to window',
         enabled: others.length > 0,
         submenu: others.map((w) => ({
-          label: `${w.title || 'SSHIT'} (${w.tabCount} tab${w.tabCount === 1 ? '' : 's'})`,
+          label: `${w.title || 'OtherSSH'} (${w.tabCount} tab${w.tabCount === 1 ? '' : 's'})`,
           click: () => send({ kind: 'moveToWindow', windowId: w.id }),
         })),
       },
+      { type: 'separator' },
+      { label: 'Teach server to report its folder', click: () => send({ kind: 'teach' }) },
       { type: 'separator' },
       { label: 'Close tab', click: () => send({ kind: 'close' }) },
     ];
@@ -277,6 +351,8 @@ function sanitizeSettingsPatch(raw: unknown): Partial<Settings> {
   if (typeof p['sshPath'] === 'string') out.sshPath = p['sshPath'];
   if (typeof p['fontFamily'] === 'string' && p['fontFamily'].trim()) out.fontFamily = p['fontFamily'].trim();
   if (typeof p['fontSize'] === 'number' && p['fontSize'] >= 6 && p['fontSize'] <= 72) out.fontSize = Math.round(p['fontSize']);
+  if (p['updateMode'] === 'auto' || p['updateMode'] === 'ask' || p['updateMode'] === 'off') out.updateMode = p['updateMode'];
+  if (p['updateChannel'] === 'stable' || p['updateChannel'] === 'beta') out.updateChannel = p['updateChannel'];
   if (typeof p['scrollback'] === 'number' && p['scrollback'] >= 0 && p['scrollback'] <= 1_000_000) out.scrollback = Math.round(p['scrollback']);
   return out;
 }

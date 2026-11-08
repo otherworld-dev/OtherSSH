@@ -1,5 +1,5 @@
-import { contextBridge, ipcRenderer, type IpcRendererEvent } from 'electron';
-import type { SshitApi } from '../shared/types';
+import { contextBridge, ipcRenderer, webUtils, type IpcRendererEvent } from 'electron';
+import type { OtherSshApi } from '../shared/types';
 
 function subscribe<T extends unknown[]>(channel: string, cb: (...args: T) => void): () => void {
   const listener = (_event: IpcRendererEvent, ...args: unknown[]): void => cb(...(args as T));
@@ -7,7 +7,7 @@ function subscribe<T extends unknown[]>(channel: string, cb: (...args: T) => voi
   return () => ipcRenderer.removeListener(channel, listener);
 }
 
-const api: SshitApi = {
+const api: OtherSshApi = {
   listProfiles: () => ipcRenderer.invoke('profiles:list'),
   saveProfile: (profile) => ipcRenderer.invoke('profiles:save', profile),
   deleteProfile: (id) => ipcRenderer.invoke('profiles:delete', id),
@@ -27,6 +27,10 @@ const api: SshitApi = {
   killSession: (sessionId) => ipcRenderer.invoke('session:kill', sessionId),
   closeSession: (sessionId) => ipcRenderer.invoke('session:close', sessionId),
 
+  pathForFile: (file) => webUtils.getPathForFile(file),
+  uploadFiles: (sessionId, localPaths, remoteDir) => ipcRenderer.invoke('transfer:upload', sessionId, localPaths, remoteDir),
+  teachServer: (sessionId) => ipcRenderer.invoke('transfer:teach', sessionId),
+
   detachSession: (sessionId) => ipcRenderer.invoke('session:detach', sessionId),
   moveSessionToNewWindow: (sessionId, serialized) => ipcRenderer.invoke('session:moveToNewWindow', sessionId, serialized),
   moveSessionToWindow: (sessionId, windowId, serialized) =>
@@ -41,6 +45,11 @@ const api: SshitApi = {
   confirm: (message) => ipcRenderer.invoke('dialog:confirm', message),
   info: (message) => ipcRenderer.invoke('dialog:info', message),
   openExternal: (url) => ipcRenderer.send('shell:openExternal', url),
+  getUpdateStatus: () => ipcRenderer.invoke('updates:status'),
+  checkForUpdates: () => ipcRenderer.invoke('updates:check'),
+  installUpdate: () => ipcRenderer.invoke('updates:install'),
+  reportModal: (open) => ipcRenderer.send('updates:modal', open),
+
   readClipboard: () => ipcRenderer.invoke('clipboard:read'),
   writeClipboard: (text) => ipcRenderer.send('clipboard:write', text),
 
@@ -51,6 +60,8 @@ const api: SshitApi = {
   onProfileCommand: (cb) => subscribe('profile:command', cb),
   onProfilesChanged: (cb) => subscribe('profiles:changed', cb),
   onSettingsChanged: (cb) => subscribe('settings:changed', cb),
+  onUpdateStatus: (cb) => subscribe('updates:status', cb),
+  onUpdateNotice: (cb) => subscribe('updates:notice', cb),
 };
 
-contextBridge.exposeInMainWorld('sshit', api);
+contextBridge.exposeInMainWorld('otherssh', api);

@@ -1,8 +1,8 @@
-import type { SshitApi } from '../shared/types';
+import type { OtherSshApi } from '../shared/types';
 
 declare global {
   interface Window {
-    sshit: SshitApi;
+    otherssh: OtherSshApi;
   }
 }
 

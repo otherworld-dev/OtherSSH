@@ -1,10 +1,13 @@
 import { JsonStore } from './json-store';
 import type { Settings } from '../shared/types';
+import { parseChannel, parseMode } from './updates/rules';
 
 export const DEFAULT_SETTINGS: Settings = {
   fontFamily: '"Cascadia Mono", Consolas, "DejaVu Sans Mono", Menlo, monospace',
   fontSize: 14,
   scrollback: 5000,
+  updateMode: 'auto',
+  updateChannel: 'stable',
 };
 
 type Listener = (settings: Settings) => void;
@@ -42,7 +45,7 @@ export class SettingsStore {
 }
 
 function normalise(settings: Settings): Settings {
-  const out: Settings = { ...settings };
+  const out: Settings = { ...settings, updateMode: parseMode(settings.updateMode), updateChannel: parseChannel(settings.updateChannel) };
   if (!out.sshPath?.trim()) delete out.sshPath;
   return out;
 }

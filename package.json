@@ -1,8 +1,8 @@
 {
-  "name": "sshit",
-  "productName": "SSHIT",
+  "name": "otherssh",
+  "productName": "OtherSSH",
   "version": "0.1.0",
-  "description": "SSH Is This. Correct. The ssh you already have, next to a sidebar.",
+  "description": "The ssh you already have, next to a sidebar.",
   "main": "./out/main/index.js",
   "private": true,
   "author": "Adam",
@@ -14,12 +14,14 @@
     "test": "vitest run",
     "typecheck": "tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.web.json",
     "dist:dir": "electron-vite build && electron-builder --win dir",
-    "dist": "electron-vite build && electron-builder --win"
+    "dist": "electron-vite build && electron-builder --win",
+    "release": "node scripts/release/build.mjs"
   },
   "dependencies": {
     "node-pty": "^1.1.0"
   },
   "devDependencies": {
+    "@noble/hashes": "^1.8.0",
     "@types/node": "^24.0.0",
     "@xterm/addon-fit": "^0.11.0",
     "@xterm/addon-serialize": "^0.14.0",

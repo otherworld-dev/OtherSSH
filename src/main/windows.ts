@@ -12,6 +12,8 @@ interface WindowState {
   adoptions: Adoption[];
   title: string;
   forceClose: boolean;
+  /** A dialog is open in the renderer; an update never installs over one. */
+  modalOpen?: boolean;
 }
 
 /** Persisted size/position of the main (non-torn-off) window. */
@@ -45,10 +47,10 @@ export class WindowManager {
       ...(remembered ? { x: remembered.x + offset, y: remembered.y + offset } : {}),
       minWidth: 480,
       minHeight: 300,
-      backgroundColor: '#14161a',
+      backgroundColor: '#0a0f16',
       show: false,
       autoHideMenuBar: true,
-      title: 'SSHIT',
+      title: 'OtherSSH',
       webPreferences: {
         preload: join(__dirname, '../preload/index.js'),
         contextIsolation: true,
@@ -116,7 +118,7 @@ export class WindowManager {
     const state = this.windows.get(wcId);
     if (!state) return;
     state.title = title;
-    state.win.setTitle(title ? `${title} - SSHIT` : 'SSHIT');
+    state.win.setTitle(title ? `${title} - OtherSSH` : 'OtherSSH');
   }
 
   listOthers(wcId: number): WindowInfo[] {
@@ -132,6 +134,30 @@ export class WindowManager {
     for (const state of this.windows.values()) {
       if (!state.win.isDestroyed()) state.win.webContents.send(channel, ...args);
     }
+  }
+
+  /** Restarting to install an update: the user has agreed to drop connections, so no per-window question. */
+  closeAllForUpdate(): void {
+    for (const state of [...this.windows.values()]) {
+      state.forceClose = true;
+      if (!state.win.isDestroyed()) state.win.close();
+    }
+  }
+
+  setModalOpen(wcId: number, open: boolean): void {
+    const state = this.windows.get(wcId);
+    if (state) state.modalOpen = open;
+  }
+
+  anyModalOpen(): boolean {
+    return [...this.windows.values()].some((s) => s.modalOpen);
+  }
+
+  /** Where a one-off message should go: the focused window, else the first still open. */
+  noticeTarget(): BrowserWindow | undefined {
+    const focused = BrowserWindow.getFocusedWindow();
+    if (focused && this.windows.has(focused.webContents.id)) return focused;
+    return [...this.windows.values()].find((s) => !s.win.isDestroyed())?.win;
   }
 
   /** The renderer asks to close (it has no tabs left); skip the confirm if nothing is live. */
@@ -182,7 +208,14 @@ export class WindowManager {
       const prev = orphan ? this.windows.get(orphan.prevOwnerWc) : undefined;
       const info = this.sessions.get(sessionId);
       if (orphan && prev && info && !prev.win.isDestroyed()) {
-        const adoption: Adoption = { sessionId, title: info.title, serialized: '', alive: info.alive, exitCode: info.exitCode };
+        const adoption: Adoption = {
+          sessionId,
+          title: info.title,
+          serialized: '',
+          alive: info.alive,
+          exitCode: info.exitCode,
+          cwdToken: info.cwdToken,
+        };
         prev.win.webContents.send('session:adopt', adoption);
         prev.win.focus();
       } else {

@@ -6,7 +6,7 @@ import { JsonStore } from './json-store';
 
 let dir: string;
 beforeEach(async () => {
-  dir = await mkdtemp(join(tmpdir(), 'sshit-json-'));
+  dir = await mkdtemp(join(tmpdir(), 'otherssh-json-'));
 });
 afterEach(async () => {
   await rm(dir, { recursive: true, force: true });
