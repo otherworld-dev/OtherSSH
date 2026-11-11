@@ -4,20 +4,25 @@
 // The shapes follow the Otherworld Services `updates` admin API (v0.4.0, see its README);
 // build.mjs only relies on `uploadInstaller` and `publishRelease` throwing on any failure.
 //
-// The token comes from OTHERWORLD_ADMIN_TOKEN and is only ever sent in the Authorization
-// header. It is never printed: every message these functions make has it masked.
+// The token comes from OTHERWORLD_ADMIN_TOKEN, or failing that the file ~/.otherworld/admin-token,
+// and is only ever sent in the Authorization header. It is never printed: every message these
+// functions make has it masked.
 
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
+import { homedir } from "node:os";
+import { join } from "node:path";
 
 export const TOKEN_ENV = "OTHERWORLD_ADMIN_TOKEN";
+export const TOKEN_FILE = join(homedir(), ".otherworld", "admin-token");
 export const DEFAULT_API_BASE = "https://api.otherworld.dev";
 export const PRODUCT = "otherssh";
 export const CHANNELS = ["stable", "beta"];
 
 /** The admin token, or an error that says how to set it (never what it is). */
-export function adminToken(env = process.env) {
-  const token = (env[TOKEN_ENV] || "").trim();
-  if (!token) throw new Error(`--publish needs the admin token in ${TOKEN_ENV}`);
+export function adminToken(env = process.env, file = TOKEN_FILE) {
+  let token = (env[TOKEN_ENV] || "").trim();
+  if (!token && existsSync(file)) token = readFileSync(file, "utf8").trim();
+  if (!token) throw new Error(`--publish needs the admin token in ${TOKEN_ENV} or ${file}`);
   return token;
 }
 

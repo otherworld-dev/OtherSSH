@@ -13,7 +13,8 @@
 // 4. With --publish, uploads the installer to Otherworld Services and then publishes the
 //    release on --channel (default stable) to --rollout percent of installs (default 100),
 //    through publish.mjs. A failed upload stops it before anything is published. The admin
-//    token comes from OTHERWORLD_ADMIN_TOKEN, is never printed, and is checked before building.
+//    token comes from OTHERWORLD_ADMIN_TOKEN or ~/.otherworld/admin-token, is never printed, and is
+//    checked before building.
 
 import { execFileSync } from "node:child_process";
 import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
