@@ -47,9 +47,11 @@ For CI, put the key file somewhere and set `OTHERSSH_UPDATER_KEY` to its path an
    release:
 
    ```
-   set OTHERWORLD_ADMIN_TOKEN=...
    node scripts/release/build.mjs --notes "Short summary" --publish --channel beta --rollout 25
    ```
+
+   The admin token is read from `OTHERWORLD_ADMIN_TOKEN` if that is set, otherwise from the file
+   `%USERPROFILE%\.otherworld\admin-token` next to the signing key (readable only by your account).
 
    `--channel` is `stable` (the default) or `beta`; `--rollout` is the percentage of installs
    offered the release (1 to 100, default 100), which the feed decides from each copy's install
