@@ -4,6 +4,14 @@ All notable changes to OtherSSH are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Changed
+- New look for the Other family: the dragon red OtherSSH icon, and slate, chalk and red in place of
+  the old teal and navy, in the window, the terminal's background, cursor and selection, and the
+  Gwyn empty state. Errors now sit on a tinted panel with a warning sign, so they don't read as
+  ordinary red accents.
+
 ## [0.2.0] - 2026-11-11
 
 ### Added
