@@ -47,7 +47,7 @@ export class WindowManager {
       ...(remembered ? { x: remembered.x + offset, y: remembered.y + offset } : {}),
       minWidth: 480,
       minHeight: 300,
-      backgroundColor: '#0a0f16',
+      backgroundColor: '#1e2124',
       show: false,
       autoHideMenuBar: true,
       title: 'OtherSSH',
