@@ -14,6 +14,15 @@ export interface McpControls {
   copy(text: string): void;
 }
 
+/** The same server as an entry for .mcp.json or another MCP client. */
+export function mcpJsonEntry(port: number, token: string): string {
+  return JSON.stringify(
+    { otherssh: { type: 'http', url: `http://127.0.0.1:${port}/mcp`, headers: { Authorization: `Bearer ${token}` } } },
+    null,
+    2,
+  );
+}
+
 /** The one-off command that adds OtherSSH to Claude Code, for every project. */
 export function claudeAddCommand(port: number, token: string): string {
   return `claude mcp add --transport http --scope user otherssh http://127.0.0.1:${port}/mcp --header "Authorization: Bearer ${token}"`;
@@ -36,6 +45,13 @@ export class SettingsForm {
       mcp.copy(command);
       this.q('#st-mcp-copy').textContent = 'Copied';
       window.setTimeout(() => (this.q('#st-mcp-copy').textContent = 'Copy'), 1500);
+    });
+    this.q('#st-mcp-json').addEventListener('click', () => {
+      const s = this.current;
+      if (!s?.mcpToken) return;
+      mcp.copy(mcpJsonEntry(s.mcpPort, s.mcpToken));
+      this.q('#st-mcp-json').textContent = 'Copied';
+      window.setTimeout(() => (this.q('#st-mcp-json').textContent = 'JSON'), 1500);
     });
     this.q('#st-mcp-token').addEventListener('click', async () => {
       this.current = await mcp.newToken();
@@ -121,6 +137,7 @@ export class SettingsForm {
     this.q('#st-mcp-command').textContent = command ?? 'Turn it on and save to get the command.';
     this.q<HTMLButtonElement>('#st-mcp-copy').disabled = !command;
     this.q<HTMLButtonElement>('#st-mcp-token').disabled = !command;
+    this.q<HTMLButtonElement>('#st-mcp-json').disabled = !command;
   }
 
   private showMcp(status: McpStatus): void {

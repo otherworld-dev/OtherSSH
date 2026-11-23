@@ -129,11 +129,34 @@
           <span>Add to Claude</span>
           <code id="st-mcp-command" class="resolved" title="Run this once in a terminal to add OtherSSH to Claude Code"></code>
           <span class="update-actions">
-            <button type="button" id="st-mcp-copy">Copy</button>
+            <button type="button" id="st-mcp-copy" title="Copy the Claude Code command">Copy</button>
+            <button type="button" id="st-mcp-json" title="Copy the server entry as JSON, for .mcp.json or another MCP client">JSON</button>
             <button type="button" id="st-mcp-token" title="Make a new token; Claude must be added again with the new command">New token</button>
           </span>
         </div>
         <p class="hint-small">Claude can only touch sessions with "Allow Claude" ticked in their settings.</p>
+        <details class="mcp-help">
+          <summary>How to connect Claude</summary>
+          <ol>
+            <li>Tick <b>Let Claude use OtherSSH</b> and press <b>Save</b>. Status should say "Listening on http://127.0.0.1:…/mcp".</li>
+            <li>
+              Open Settings again, press <b>Copy</b> and run the command once in a terminal (PowerShell, cmd or bash). It adds
+              OtherSSH to Claude Code for all your projects. <code>claude mcp list</code> should then show <code>otherssh</code> as connected.
+            </li>
+            <li>Edit each session Claude may use and tick <b>Allow Claude to use this session</b>. Those need key or agent login.</li>
+            <li>Leave OtherSSH open and ask Claude, for example: "Use OtherSSH to check disk space on web01."</li>
+          </ol>
+          <p>
+            Claude can list sessions and tabs, open a tab you can watch, read and type into it, run a command in the background,
+            upload files and close tabs. A tab's dot turns orange while Claude is typing into it, and <b>Recent</b> below lists
+            what it did.
+          </p>
+          <p>
+            After <b>New token</b> or a port change, run <code>claude mcp remove otherssh -s user</code>, then the new copied
+            command. For another MCP client, press <b>JSON</b>: it is a Streamable HTTP server that needs the
+            <code>Authorization</code> header shown there. It only answers on this PC.
+          </p>
+        </details>
         <div class="field mcp-recent-field"><span>Recent</span><ul id="st-mcp-recent" class="mcp-recent"></ul></div>
         <div class="actions">
           <button type="button" id="st-cancel">Cancel</button>

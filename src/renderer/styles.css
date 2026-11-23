@@ -660,6 +660,46 @@ select {
   font-size: 12px;
 }
 
+#settings-dialog {
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.mcp-help {
+  margin: 0 0 10px 98px;
+  color: var(--fg-dim);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.mcp-help summary {
+  color: var(--accent);
+  cursor: pointer;
+}
+
+.mcp-help ol {
+  margin: 6px 0;
+  padding-left: 18px;
+}
+
+.mcp-help li {
+  margin-bottom: 4px;
+}
+
+.mcp-help p {
+  margin: 6px 0;
+}
+
+.mcp-help b {
+  color: var(--fg);
+  font-weight: 600;
+}
+
+.mcp-help code {
+  font-family: "Cascadia Mono", Consolas, monospace;
+  color: var(--fg);
+}
+
 .mcp-recent-field {
   align-items: start;
 }
