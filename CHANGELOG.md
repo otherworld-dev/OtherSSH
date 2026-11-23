@@ -4,7 +4,7 @@ All notable changes to OtherSSH are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project uses
 [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [0.3.1] - 2026-11-23
 
 ### Changed
 - New look for the Other family: the dragon red OtherSSH icon, and slate, chalk and red in place of
@@ -48,5 +48,6 @@ All notable changes to OtherSSH are documented here. The format is based on
 - SSHIT is now called OtherSSH, with a new icon and the Otherworld colours. Saved sessions and
   settings are carried over on first start.
 
+[0.3.1]: https://github.com/otherworld-dev/OtherSSH/releases/tag/v0.3.1
 [0.3.0]: https://github.com/otherworld-dev/OtherSSH/releases/tag/v0.3.0
 [0.2.0]: https://github.com/otherworld-dev/OtherSSH/releases/tag/v0.2.0

@@ -1,7 +1,7 @@
 {
   "name": "otherssh",
   "productName": "OtherSSH",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "The ssh you already have, next to a sidebar.",
   "main": "./out/main/index.js",
   "private": true,
