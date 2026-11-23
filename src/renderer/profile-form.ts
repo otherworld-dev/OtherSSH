@@ -55,6 +55,7 @@ export class ProfileForm {
     this.field('pf-port').value = profile?.port ? String(profile.port) : '';
     this.field('pf-identity').value = profile?.identityFile ?? '';
     this.field('pf-extra').value = profile?.extraArgs ? joinArgs(profile.extraArgs) : '';
+    this.field('pf-claude').checked = profile?.allowClaude === true;
     this.showError(null);
     this.dialog.showModal();
     this.field(profile ? 'pf-name' : 'pf-host').focus();
@@ -94,6 +95,7 @@ export class ProfileForm {
       identityFile,
       extraArgs: extraArgs.length ? extraArgs : undefined,
       group,
+      allowClaude: this.field('pf-claude').checked || undefined,
     };
   }
 

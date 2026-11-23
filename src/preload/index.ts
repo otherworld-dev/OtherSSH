@@ -62,6 +62,13 @@ const api: OtherSshApi = {
   onSettingsChanged: (cb) => subscribe('settings:changed', cb),
   onUpdateStatus: (cb) => subscribe('updates:status', cb),
   onUpdateNotice: (cb) => subscribe('updates:notice', cb),
+
+  getMcpStatus: () => ipcRenderer.invoke('mcp:status'),
+  newMcpToken: () => ipcRenderer.invoke('mcp:newToken'),
+  onMcpStatus: (cb) => subscribe('mcp:status', cb),
+  onMcpActivity: (cb) => subscribe('mcp:activity', cb),
+  onMcpRequest: (cb) => subscribe('mcp:request', cb),
+  replyMcp: (requestId, ok, value) => ipcRenderer.send('mcp:reply', requestId, ok, value),
 };
 
 contextBridge.exposeInMainWorld('otherssh', api);

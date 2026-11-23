@@ -67,6 +67,9 @@
           <button type="button" id="pf-browse">Browse&hellip;</button>
         </div>
         <label class="field"><span>Extra args</span><input id="pf-extra" type="text" placeholder="e.g. -o ServerAliveInterval=30" spellcheck="false" /></label>
+        <label class="field check" title="Claude can open this session, read its screen, type into it, run commands and upload files. Needs Claude turned on in Settings, and key or agent login."
+          ><span>Claude</span><span><input id="pf-claude" type="checkbox" /> Allow Claude to use this session</span></label
+        >
         <p id="pf-error" class="error" hidden></p>
         <div class="actions">
           <button type="button" id="pf-cancel">Cancel</button>
@@ -116,6 +119,22 @@
             <button type="button" id="st-update-install" class="primary" hidden>Restart now</button>
           </span>
         </div>
+        <h3 class="section">Claude</h3>
+        <label class="field check"
+          ><span>MCP server</span><span><input id="st-mcp-enabled" type="checkbox" /> Let Claude use OtherSSH (this PC only)</span></label
+        >
+        <label class="field"><span>Port</span><input id="st-mcp-port" type="number" min="1024" max="65535" /></label>
+        <div class="field"><span>Status</span><span id="st-mcp-status" class="update-status"></span></div>
+        <div class="field mcp-command">
+          <span>Add to Claude</span>
+          <code id="st-mcp-command" class="resolved" title="Run this once in a terminal to add OtherSSH to Claude Code"></code>
+          <span class="update-actions">
+            <button type="button" id="st-mcp-copy">Copy</button>
+            <button type="button" id="st-mcp-token" title="Make a new token; Claude must be added again with the new command">New token</button>
+          </span>
+        </div>
+        <p class="hint-small">Claude can only touch sessions with "Allow Claude" ticked in their settings.</p>
+        <div class="field mcp-recent-field"><span>Recent</span><ul id="st-mcp-recent" class="mcp-recent"></ul></div>
         <div class="actions">
           <button type="button" id="st-cancel">Cancel</button>
           <span class="spacer"></span>

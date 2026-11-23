@@ -11,6 +11,7 @@ import { SessionStore } from './session-store';
 import { SettingsStore } from './settings';
 import { resolveSshPath } from './ssh-path';
 import { createLog } from './log';
+import { createMcpController } from './mcp';
 import { createTransfers, type RunResult } from './transfer';
 import { createAppUpdater } from './updates/electron';
 import { WindowManager, type WindowStateFile } from './windows';
@@ -81,27 +82,42 @@ if (!app.requestSingleInstanceLock()) {
     const updates = createAppUpdater({ userData, settings, sessions, transfers, windows: () => windows, log });
 
     windows = new WindowManager(sessions, windowState, savedWindowState);
-    registerIpc({ sessions, windows, profiles, settings, transfers, updates, resolveSsh });
+    const mcp = createMcpController({ settings, profiles, sessions, windows: () => windows, transfers, version: app.getVersion() });
+    registerIpc({ sessions, windows, profiles, settings, transfers, updates, mcp, resolveSsh });
     profiles.onChange((list) => windows?.broadcast('profiles:changed', list));
     settings.onChange((s) => windows?.broadcast('settings:changed', s));
 
     windows.create({ tornOff: false });
     void updates.updater.start();
+    mcp.start();
   });
 }
 
 app.on('window-all-closed', () => app.quit());
 
 /** Run scp/ssh without a console window, collecting output. Never rejects: a spawn error becomes stderr. */
-function runTool(file: string, args: string[], input?: string): Promise<RunResult> {
+function runTool(file: string, args: string[], input?: string, timeoutMs?: number): Promise<RunResult> {
   return new Promise((resolve) => {
     const child = spawn(file, args, { windowsHide: true, cwd: os.homedir(), stdio: ['pipe', 'pipe', 'pipe'] });
     let stdout = '';
     let stderr = '';
+    let timedOut = false;
+    const timer = timeoutMs
+      ? setTimeout(() => {
+          timedOut = true;
+          child.kill();
+        }, timeoutMs)
+      : undefined;
     child.stdout.setEncoding('utf8').on('data', (d: string) => (stdout += d));
     child.stderr.setEncoding('utf8').on('data', (d: string) => (stderr += d));
-    child.on('error', (err) => resolve({ code: -1, stdout, stderr: `${stderr}\n${err.message}` }));
-    child.on('close', (code) => resolve({ code: code ?? -1, stdout, stderr }));
+    child.on('error', (err) => {
+      clearTimeout(timer);
+      resolve({ code: -1, stdout, stderr: `${stderr}\n${err.message}` });
+    });
+    child.on('close', (code) => {
+      clearTimeout(timer);
+      resolve({ code: code ?? -1, stdout, stderr, ...(timedOut ? { timedOut } : {}) });
+    });
     child.stdin.on('error', () => undefined); // the tool may exit before reading it all
     child.stdin.end(input ?? '');
   });

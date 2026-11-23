@@ -1,4 +1,4 @@
-import type { Adoption, QuickTarget, SessionProfile, UpdateNotice } from '../shared/types';
+import type { Adoption, McpRendererRequest, QuickTarget, SessionProfile, UpdateNotice } from '../shared/types';
 import { isLocalProcessTitle } from '../shared/titles';
 import { ProfileForm } from './profile-form';
 import { SettingsForm } from './settings-form';
@@ -48,7 +48,7 @@ async function boot(): Promise<void> {
       settings: $('#btn-settings'),
     },
     {
-      onConnect: (p) => void connect(p),
+      onConnect: (p) => void connect(p).catch(() => undefined),
       onQuickConnect: (t) => void quickConnect(t),
       onNew: () => void editProfile(),
       onEdit: (p) => void editProfile(p),
@@ -62,12 +62,19 @@ async function boot(): Promise<void> {
 
   const toasts = new Toasts($('#toasts'));
   const profileForm = new ProfileForm($('#profile-dialog'), api.browseForFile);
-  const settingsForm = new SettingsForm($('#settings-dialog'), api.browseForFile, {
+  const updateControls = {
     status: () => api.getUpdateStatus(),
     check: () => api.checkForUpdates(),
     install: () => api.installUpdate(),
-    onStatus: (cb) => api.onUpdateStatus(cb),
-  });
+    onStatus: (cb: Parameters<typeof api.onUpdateStatus>[0]) => api.onUpdateStatus(cb),
+  };
+  const mcpControls = {
+    status: () => api.getMcpStatus(),
+    newToken: () => api.newMcpToken(),
+    onStatus: (cb: Parameters<typeof api.onMcpStatus>[0]) => api.onMcpStatus(cb),
+    copy: (text: string) => api.writeClipboard(text),
+  };
+  const settingsForm = new SettingsForm($('#settings-dialog'), api.browseForFile, updateControls, mcpControls);
 
   // ---- tabs and sessions -----------------------------------------------------
 
@@ -115,14 +122,26 @@ async function boot(): Promise<void> {
     tab.view.markDead(undefined, canReconnect);
   }
 
-  async function connect(profile: SessionProfile): Promise<void> {
+  /** Open a saved session in a new tab; resolves with the session id, or rejects with why it failed (also shown in the tab). */
+  async function connect(profile: SessionProfile): Promise<{ sessionId: string; title: string }> {
     const tab = newTab(profile.name);
     try {
       const { sessionId, title, cwdToken } = await api.openSession(profile.id, tab.view.cols, tab.view.rows);
       bindSession(tab, sessionId, cwdToken, title);
+      return { sessionId, title };
     } catch (err) {
       failTab(tab, err, false);
+      throw err;
     }
+  }
+
+  /** Remove a tab and end its connection, without asking. */
+  function dropTab(tab: Tab): void {
+    const sessionId = tab.sessionId;
+    tab.sessionId = null;
+    tabs.remove(tab);
+    if (sessionId) void api.closeSession(sessionId).catch(() => undefined);
+    if (tabs.count === 0 && init.tornOff) api.closeWindow();
   }
 
   async function quickConnect(target: QuickTarget): Promise<void> {
@@ -155,11 +174,7 @@ async function boot(): Promise<void> {
         return;
       }
     }
-    const sessionId = tab.sessionId;
-    tab.sessionId = null;
-    tabs.remove(tab);
-    if (sessionId) void api.closeSession(sessionId).catch(() => undefined);
-    if (tabs.count === 0 && init.tornOff) api.closeWindow();
+    dropTab(tab);
   }
 
   async function moveTab(tab: Tab, target: { kind: 'new' } | { kind: 'window'; windowId: number }): Promise<void> {
@@ -288,6 +303,51 @@ async function boot(): Promise<void> {
     }
   }
 
+  // ---- Claude (MCP) ----------------------------------------------------------
+
+  async function serveMcp(request: McpRendererRequest): Promise<unknown> {
+    switch (request.kind) {
+      case 'open': {
+        const profile = sidebar.get(request.profileId);
+        if (!profile) throw new Error('That saved session no longer exists.');
+        return connect(profile);
+      }
+      case 'read': {
+        const tab = tabs.bySession(request.sessionId);
+        if (!tab) throw new Error('That tab is not in this window.');
+        return tab.view.readText(request.lines);
+      }
+      case 'close': {
+        const tab = tabs.bySession(request.sessionId);
+        if (tab) dropTab(tab);
+        return null;
+      }
+    }
+  }
+
+  api.onMcpRequest((requestId, request) => {
+    serveMcp(request).then(
+      (value) => api.replyMcp(requestId, true, value),
+      (err) => api.replyMcp(requestId, false, errorMessage(err)),
+    );
+  });
+
+  /** Tabs Claude has typed into lately get a marker, so the user can see who is driving. */
+  const claudeTimers = new Map<string, number>();
+  api.onMcpActivity((sessionId) => {
+    const tab = tabs.bySession(sessionId);
+    if (!tab) return;
+    tab.el.classList.add('claude');
+    window.clearTimeout(claudeTimers.get(sessionId));
+    claudeTimers.set(
+      sessionId,
+      window.setTimeout(() => {
+        claudeTimers.delete(sessionId);
+        tabs.bySession(sessionId)?.el.classList.remove('claude');
+      }, 5000),
+    );
+  });
+
   // ---- updates ---------------------------------------------------------------
 
   const restartToUpdate = (): void => {
@@ -331,7 +391,7 @@ async function boot(): Promise<void> {
     if (!result) return;
     try {
       const saved = await api.saveProfile(result.profile);
-      if (result.connect) void connect(saved);
+      if (result.connect) void connect(saved).catch(() => undefined);
     } catch (err) {
       window.alert(errorMessage(err));
     }
@@ -453,7 +513,7 @@ async function boot(): Promise<void> {
     if (!profile) return;
     switch (cmd) {
       case 'connect':
-        void connect(profile);
+        void connect(profile).catch(() => undefined);
         break;
       case 'edit':
         void editProfile(profile);
