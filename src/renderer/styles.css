@@ -648,6 +648,93 @@ select {
   font-size: 12px;
 }
 
+.field.check input[type="checkbox"] {
+  margin: 0 6px 0 0;
+  vertical-align: -2px;
+  accent-color: var(--accent);
+}
+
+.hint-small {
+  margin: -4px 0 10px 98px;
+  color: var(--fg-dim);
+  font-size: 12px;
+}
+
+#settings-dialog {
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.mcp-help {
+  margin: 0 0 10px 98px;
+  color: var(--fg-dim);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.mcp-help summary {
+  color: var(--accent);
+  cursor: pointer;
+}
+
+.mcp-help ol {
+  margin: 6px 0;
+  padding-left: 18px;
+}
+
+.mcp-help li {
+  margin-bottom: 4px;
+}
+
+.mcp-help p {
+  margin: 6px 0;
+}
+
+.mcp-help b {
+  color: var(--fg);
+  font-weight: 600;
+}
+
+.mcp-help code {
+  font-family: "Cascadia Mono", Consolas, monospace;
+  color: var(--fg);
+}
+
+.mcp-recent-field {
+  align-items: start;
+}
+
+.mcp-recent {
+  max-height: 110px;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+  font-size: 12px;
+}
+
+.mcp-recent li {
+  padding: 1px 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mcp-recent li.fail {
+  color: var(--danger);
+}
+
+.mcp-recent .when {
+  color: var(--fg-dim);
+  margin-right: 6px;
+}
+
+/* Claude typed into this tab in the last few seconds. */
+.tab.claude .dot {
+  background: #d97757;
+  box-shadow: 0 0 0 2px rgba(217, 119, 87, 0.35);
+}
+
 .update-actions {
   display: flex;
   gap: 8px;

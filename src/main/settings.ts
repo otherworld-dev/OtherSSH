@@ -2,12 +2,16 @@ import { JsonStore } from './json-store';
 import type { Settings } from '../shared/types';
 import { parseChannel, parseMode } from './updates/rules';
 
+export const DEFAULT_MCP_PORT = 47823;
+
 export const DEFAULT_SETTINGS: Settings = {
   fontFamily: '"Cascadia Mono", Consolas, "DejaVu Sans Mono", Menlo, monospace',
   fontSize: 14,
   scrollback: 5000,
   updateMode: 'auto',
   updateChannel: 'stable',
+  mcpEnabled: false,
+  mcpPort: DEFAULT_MCP_PORT,
 };
 
 type Listener = (settings: Settings) => void;
@@ -47,5 +51,13 @@ export class SettingsStore {
 function normalise(settings: Settings): Settings {
   const out: Settings = { ...settings, updateMode: parseMode(settings.updateMode), updateChannel: parseChannel(settings.updateChannel) };
   if (!out.sshPath?.trim()) delete out.sshPath;
+  out.mcpEnabled = out.mcpEnabled === true;
+  if (!validPort(out.mcpPort)) out.mcpPort = DEFAULT_MCP_PORT;
+  if (typeof out.mcpToken !== 'string' || !out.mcpToken) delete out.mcpToken;
   return out;
+}
+
+/** Unprivileged ports only: the MCP server never needs to be admin. */
+export function validPort(port: unknown): port is number {
+  return typeof port === 'number' && Number.isInteger(port) && port >= 1024 && port <= 65535;
 }

@@ -12,12 +12,15 @@ export interface RunResult {
   code: number;
   stdout: string;
   stderr: string;
+  /** The tool was killed for running past its time limit. */
+  timedOut?: boolean;
 }
 
 export interface TransferDeps {
   resolveSsh(): string | null;
   exists(path: string): boolean;
-  run(file: string, args: string[], input?: string): Promise<RunResult>;
+  /** `timeoutMs` kills the tool and resolves with `timedOut` once it has run that long. */
+  run(file: string, args: string[], input?: string, timeoutMs?: number): Promise<RunResult>;
   newId?(): string;
 }
 
@@ -213,7 +216,12 @@ export function createTransfers(deps: TransferDeps) {
     throw new Error('The server did not confirm the change.');
   };
 
+  /** One command on the server, no terminal, no stdin; for Claude's run_command. Never throws for a non-zero exit. */
+  const command = (profile: SessionProfile, cmd: string, timeoutMs: number): Promise<RunResult> =>
+    tracked(async () => deps.run(tool('ssh'), sshExecArgs(profile, cmd), '', timeoutMs));
+
   return {
+    command,
     upload: (profile: SessionProfile, localPaths: string[], remoteDir: string) => tracked(() => upload(profile, localPaths, remoteDir)),
     teach: (profile: SessionProfile) => tracked(() => teach(profile)),
     get running(): number {

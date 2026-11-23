@@ -223,6 +223,11 @@ export class SessionManager {
     return { sessionId: r.id, profileId: r.profileId, title: r.title, alive: r.pty !== null, exitCode: r.exitCode, ownerWc: r.ownerWc, profile: r.profile, cwdToken: r.cwdToken };
   }
 
+  /** Every session the app holds, in the order they were opened. */
+  list(): SessionInfo[] {
+    return [...this.sessions.keys()].map((id) => this.get(id)!);
+  }
+
   ownerOf(sessionId: string): number | null {
     return this.sessions.get(sessionId)?.ownerWc ?? null;
   }

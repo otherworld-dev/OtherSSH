@@ -162,6 +162,28 @@ export class TerminalView {
     });
   }
 
+  /**
+   * The last `lines` rows of scrollback and screen as plain text, wrapped rows
+   * joined back up, trailing blank rows dropped. Read after queued output is parsed.
+   */
+  readText(lines: number): Promise<string> {
+    return new Promise((resolve) => {
+      this.term.write('', () => {
+        const buffer = this.term.buffer.active;
+        const rows: string[] = [];
+        for (let y = 0; y < buffer.length; y++) {
+          const line = buffer.getLine(y);
+          if (!line) continue;
+          const text = line.translateToString(true);
+          if (line.isWrapped && rows.length > 0) rows[rows.length - 1] += text;
+          else rows.push(text);
+        }
+        while (rows.length > 0 && rows[rows.length - 1]!.trim() === '') rows.pop();
+        resolve(rows.slice(-lines).join('\n'));
+      });
+    });
+  }
+
   markDead(exitCode: number | undefined, canReconnect: boolean): void {
     if (this.dead) return;
     this.dead = true;

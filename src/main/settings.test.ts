@@ -44,4 +44,13 @@ describe('SettingsStore', () => {
     await store.update({ sshPath: '' });
     expect(store.get().sshPath).toBeUndefined();
   });
+
+  it('keeps the MCP server off by default and repairs a bad port or token from the file', async () => {
+    await writeFile(file, JSON.stringify({ mcpEnabled: 'yes', mcpPort: 80, mcpToken: '' }), 'utf8');
+    const store = new SettingsStore(file);
+    await store.load();
+    expect(store.get().mcpEnabled).toBe(false);
+    expect(store.get().mcpPort).toBe(DEFAULT_SETTINGS.mcpPort);
+    expect(store.get().mcpToken).toBeUndefined();
+  });
 });

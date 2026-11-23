@@ -41,3 +41,11 @@ describe('sanitizeProfile group', () => {
     expect(sanitizeProfile({ id: '', name: 'n', host: 'h' }).group).toBeUndefined();
   });
 });
+
+describe('sanitizeProfile allowClaude', () => {
+  it('keeps only a real true', () => {
+    expect(sanitizeProfile({ id: '', name: 'n', host: 'h', allowClaude: true }).allowClaude).toBe(true);
+    expect(sanitizeProfile({ id: '', name: 'n', host: 'h', allowClaude: 'yes' } as never).allowClaude).toBeUndefined();
+    expect(sanitizeProfile({ id: '', name: 'n', host: 'h' }).allowClaude).toBeUndefined();
+  });
+});

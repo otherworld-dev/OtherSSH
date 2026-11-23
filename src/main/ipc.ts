@@ -21,8 +21,9 @@ import { buildSshArgs, parseSetenv, withCwdToken } from './ssh-args';
 import { importableHosts, parseSshConfigHosts, type SshConfigHost } from './ssh-config';
 import type { SessionManager } from './session-manager';
 import type { SessionStore } from './session-store';
-import type { SettingsStore } from './settings';
+import { validPort, type SettingsStore } from './settings';
 import type { Transfers } from './transfer';
+import type { McpController } from './mcp';
 import type { AppUpdater } from './updates/electron';
 import type { WindowManager } from './windows';
 
@@ -33,6 +34,7 @@ export interface IpcContext {
   settings: SettingsStore;
   transfers: Transfers;
   updates: AppUpdater;
+  mcp: McpController;
   resolveSsh: () => string | null;
 }
 
@@ -269,6 +271,11 @@ export function registerIpc(ctx: IpcContext): void {
   });
   on('updates:modal', (event, open: unknown) => windows.setModalOpen(event.sender.id, open === true));
 
+  // ---- MCP (Claude) ---------------------------------------------------------------
+  handle('mcp:status', () => ctx.mcp.status());
+  handle('mcp:newToken', () => ctx.mcp.newToken());
+  on('mcp:reply', (event, requestId: unknown, ok: unknown, value: unknown) => ctx.mcp.reply(event.sender.id, requestId, ok, value));
+
   // ---- tear-off ---------------------------------------------------------------
   handle('session:detach', (event, sessionId: string) => sessions.detach(sessionId, event.sender.id));
 
@@ -353,6 +360,8 @@ function sanitizeSettingsPatch(raw: unknown): Partial<Settings> {
   if (typeof p['fontSize'] === 'number' && p['fontSize'] >= 6 && p['fontSize'] <= 72) out.fontSize = Math.round(p['fontSize']);
   if (p['updateMode'] === 'auto' || p['updateMode'] === 'ask' || p['updateMode'] === 'off') out.updateMode = p['updateMode'];
   if (p['updateChannel'] === 'stable' || p['updateChannel'] === 'beta') out.updateChannel = p['updateChannel'];
+  if (typeof p['mcpEnabled'] === 'boolean') out.mcpEnabled = p['mcpEnabled'];
+  if (validPort(p['mcpPort'])) out.mcpPort = p['mcpPort'];
   if (typeof p['scrollback'] === 'number' && p['scrollback'] >= 0 && p['scrollback'] <= 1_000_000) out.scrollback = Math.round(p['scrollback']);
   return out;
 }
