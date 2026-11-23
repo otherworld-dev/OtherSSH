@@ -51,7 +51,8 @@ export class SettingsForm {
       });
     };
     copyButton('#st-mcp-url-copy', (port) => mcpUrl(port));
-    copyButton('#st-mcp-token-copy', (_port, token) => token);
+    copyButton('#st-mcp-header-copy', () => 'Authorization');
+    copyButton('#st-mcp-token-copy', (_port, token) => `Bearer ${token}`);
     copyButton('#st-mcp-json', mcpJsonEntry);
     copyButton('#st-mcp-copy', claudeAddCommand);
     this.q('#st-mcp-token').addEventListener('click', async () => {
@@ -133,8 +134,8 @@ export class SettingsForm {
     const s = this.current;
     const token = s?.mcpToken;
     this.q('#st-mcp-url').textContent = s ? mcpUrl(s.mcpPort) : '';
-    this.q('#st-mcp-token-text').textContent = token ? `${token.slice(0, 6)}…` : 'Turn it on and save to make one.';
-    for (const id of ['#st-mcp-url-copy', '#st-mcp-token-copy', '#st-mcp-token', '#st-mcp-json', '#st-mcp-copy']) {
+    this.q('#st-mcp-token-text').textContent = token ? `Bearer ${token.slice(0, 6)}…` : 'Turn it on and save to make one.';
+    for (const id of ['#st-mcp-url-copy', '#st-mcp-header-copy', '#st-mcp-token-copy', '#st-mcp-token', '#st-mcp-json', '#st-mcp-copy']) {
       this.q<HTMLButtonElement>(id).disabled = !token;
     }
   }

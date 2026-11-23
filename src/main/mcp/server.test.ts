@@ -77,10 +77,11 @@ describe('MCP HTTP server', () => {
     await client.close();
   });
 
-  it('turns away a wrong or missing token', async () => {
+  it('turns away a wrong or missing token with 403 and how to fix it, never 401 (which starts an OAuth sign-in)', async () => {
     server = await startMcpServer({ port: 0, token: TOKEN, tools: fakeTools(), version: '1' });
-    await expect(connect('wrong')).rejects.toThrow();
-    expect(await rawPost({ 'Content-Type': 'application/json' })).toBe(401);
+    await expect(connect('wrong')).rejects.toThrow(/Authorization: Bearer/);
+    expect(await rawPost({ 'Content-Type': 'application/json' })).toBe(403);
+    expect(await rawPost({ 'Content-Type': 'application/json', Authorization: 'Bearer wrong' })).toBe(403);
   });
 
   it('turns away a request for another host name (DNS rebinding)', async () => {

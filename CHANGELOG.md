@@ -4,6 +4,14 @@ All notable changes to OtherSSH are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Fixed
+- An AI tool that connected without the token was told to sign in, and the sign-in then failed,
+  because OtherSSH answered "401". It now answers "403" with what to do: add the header
+  "Authorization: Bearer <token>". Settings shows the header name and value as separate rows with
+  their own Copy buttons, and "How to connect an AI assistant" explains the sign-in message.
+
 ## [0.3.1] - 2026-11-23
 
 ### Changed

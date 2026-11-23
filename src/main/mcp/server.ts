@@ -140,6 +140,10 @@ export function buildMcpServer(tools: McpTools, version: string): McpServer {
   return server;
 }
 
+export const TOKEN_HELP =
+  'OtherSSH needs the header "Authorization: Bearer <token>". Copy the header value from OtherSSH Settings, ' +
+  'AI assistants (MCP), add it to this server in your AI tool, and refresh. There is no sign-in to do.';
+
 function tokenMatches(header: string | undefined, token: string): boolean {
   const expected = Buffer.from(`Bearer ${token}`);
   const given = Buffer.from(header ?? '');
@@ -161,7 +165,9 @@ export function startMcpServer(opts: McpServerOptions): Promise<McpHttpServer> {
     const host = (req.headers.host ?? '').toLowerCase();
     if (host !== `127.0.0.1:${port}` && host !== `localhost:${port}`) return sendJson(res, 403, rpcError('Forbidden host'));
     if ((req.url ?? '').split('?')[0] !== '/mcp') return sendJson(res, 404, rpcError('Not found: the MCP endpoint is /mcp'));
-    if (!tokenMatches(req.headers.authorization, opts.token)) return sendJson(res, 401, rpcError('Missing or wrong token. Copy the command from OtherSSH Settings again.'));
+    // 403, not 401: MCP clients take a 401 as "start an OAuth sign-in", which OtherSSH doesn't have,
+    // and then show a sign-in error instead of this message.
+    if (!tokenMatches(req.headers.authorization, opts.token)) return sendJson(res, 403, rpcError(TOKEN_HELP));
     if (req.method !== 'POST') return sendJson(res, 405, rpcError('Method not allowed'), { Allow: 'POST' });
 
     const server = buildMcpServer(opts.tools, opts.version);

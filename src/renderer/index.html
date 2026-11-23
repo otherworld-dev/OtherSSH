@@ -131,11 +131,16 @@
           <span class="update-actions"><button type="button" id="st-mcp-url-copy">Copy</button></span>
         </div>
         <div class="field">
-          <span>Token</span>
-          <code id="st-mcp-token-text" class="resolved" title="Sent as the header Authorization: Bearer &lt;token&gt;"></code>
+          <span>Header name</span>
+          <code class="resolved">Authorization</code>
+          <span class="update-actions"><button type="button" id="st-mcp-header-copy">Copy</button></span>
+        </div>
+        <div class="field">
+          <span>Header value</span>
+          <code id="st-mcp-token-text" class="resolved" title="Bearer, a space, then the token. Copy gives you the whole value."></code>
           <span class="update-actions">
-            <button type="button" id="st-mcp-token-copy">Copy</button>
-            <button type="button" id="st-mcp-token" title="Make a new token; every connected AI tool then needs the new one">New</button>
+            <button type="button" id="st-mcp-token-copy" title="Copy the whole value: Bearer and the token">Copy</button>
+            <button type="button" id="st-mcp-token" title="Make a new token; every connected AI tool then needs the new value">New token</button>
           </span>
         </div>
         <div class="field">
@@ -155,7 +160,11 @@
               Open Settings again and add OtherSSH to your AI tool as an MCP server. It is a Streamable HTTP server, so any tool that
               supports remote (HTTP) MCP servers can use it:
               <ul>
-                <li>Give the tool the <b>Server URL</b> and the header <code>Authorization: Bearer &lt;token&gt;</code>, using the <b>Token</b> above.</li>
+                <li>
+                  Most tools have a URL box and a list of headers. Paste the <b>Server URL</b>, then add one header: name
+                  <code>Authorization</code>, value from <b>Header value</b> (the word Bearer, a space, then the token). Use the Copy
+                  buttons above for both.
+                </li>
                 <li>If the tool takes a JSON list of servers (an <code>mcpServers</code> file), press <b>Copy JSON config</b> and paste the entry in.</li>
                 <li>For Claude Code, press <b>Copy Claude Code command</b> and run it once in a terminal.</li>
               </ul>
@@ -169,7 +178,11 @@
             below lists what it did.
           </p>
           <p>
-            After <b>New</b> token or a port change, update the server in your AI tool too. The server only answers on this PC.
+            <b>If your tool says the server needs you to sign in</b>, or tries an OAuth sign-in, the header is missing or
+            wrong. OtherSSH has no sign-in, only the header. Add or fix it, save, and refresh the server in your tool.
+          </p>
+          <p>
+            After <b>New token</b> or a port change, update the server in your AI tool too. The server only answers on this PC.
             A tool that can only start local (stdio) MCP servers needs an HTTP bridge in between.
           </p>
         </details>
