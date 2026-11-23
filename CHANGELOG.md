@@ -4,6 +4,19 @@ All notable changes to OtherSSH are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.3.1] - 2026-11-23
+
+### Changed
+- New look for the Other family: the dragon red OtherSSH icon, and slate, chalk and red in place of
+  the old teal and navy, in the window, the terminal's background, cursor and selection, and the
+  Gwyn empty state. Errors now sit on a tinted panel with a warning sign, so they don't read as
+  ordinary red accents. The dot on a tab an AI is typing into is now amber, to stand apart from the
+  red activity dot.
+- The MCP server is no longer just for Claude: any AI tool that supports remote (Streamable HTTP)
+  MCP servers can connect. Settings, now "AI assistants (MCP)", shows the server URL and token and
+  copies a JSON server entry, with the Claude Code command as one option. The per-session box is
+  now "Allow AI assistants to use this session"; sessions ticked under 0.3.0 stay ticked.
+
 ## [0.3.0] - 2026-11-23
 
 ### Added
@@ -35,5 +48,6 @@ All notable changes to OtherSSH are documented here. The format is based on
 - SSHIT is now called OtherSSH, with a new icon and the Otherworld colours. Saved sessions and
   settings are carried over on first start.
 
+[0.3.1]: https://github.com/otherworld-dev/OtherSSH/releases/tag/v0.3.1
 [0.3.0]: https://github.com/otherworld-dev/OtherSSH/releases/tag/v0.3.0
 [0.2.0]: https://github.com/otherworld-dev/OtherSSH/releases/tag/v0.2.0

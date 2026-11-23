@@ -17,7 +17,7 @@ function fakeTools(): McpTools {
     sendInput: vi.fn(async () => 'sent'),
     closeTab: vi.fn(async () => 'closed'),
     runCommand: vi.fn(async () => {
-      throw new McpToolError('"db01" is not open to Claude.');
+      throw new McpToolError('"db01" is not open to AI assistants.');
     }),
     uploadFile: vi.fn(async () => 'uploaded'),
   };
@@ -68,12 +68,12 @@ describe('MCP HTTP server', () => {
     await client.close();
   });
 
-  it('returns a refusal as an error result Claude can read', async () => {
+  it('returns a refusal as an error result the AI can read', async () => {
     server = await startMcpServer({ port: 0, token: TOKEN, tools: fakeTools(), version: '1' });
     const client = await connect();
     const result = await client.callTool({ name: 'run_command', arguments: { session: 'db01', command: 'uptime' } });
     expect(result.isError).toBe(true);
-    expect(result.content).toEqual([{ type: 'text', text: '"db01" is not open to Claude.' }]);
+    expect(result.content).toEqual([{ type: 'text', text: '"db01" is not open to AI assistants.' }]);
     await client.close();
   });
 

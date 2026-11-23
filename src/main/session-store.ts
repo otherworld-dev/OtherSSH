@@ -21,7 +21,7 @@ export class SessionStore {
 
   async load(): Promise<void> {
     const data = await this.store.load({ version: 1, profiles: [] });
-    this.profiles = Array.isArray(data?.profiles) ? data.profiles : [];
+    this.profiles = (Array.isArray(data?.profiles) ? data.profiles : []).map(migrate);
   }
 
   list(): SessionProfile[] {
@@ -57,4 +57,12 @@ export class SessionStore {
     const snapshot = this.list();
     for (const listener of this.listeners) listener(snapshot);
   }
+}
+
+/** 0.3.0 saved the MCP permission as allowClaude; it is allowAi now. */
+function migrate(profile: SessionProfile): SessionProfile {
+  const legacy = profile as SessionProfile & { allowClaude?: boolean };
+  if (!('allowClaude' in legacy)) return profile;
+  const { allowClaude, ...rest } = legacy;
+  return allowClaude === true ? { ...rest, allowAi: true } : rest;
 }

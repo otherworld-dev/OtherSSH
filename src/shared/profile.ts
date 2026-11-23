@@ -25,7 +25,8 @@ export function sanitizeProfile(raw: SessionProfile): SessionProfile {
   if (identityFile) out.identityFile = identityFile;
   if (extraArgs.length) out.extraArgs = extraArgs;
   if (group) out.group = group;
-  if (r['allowClaude'] === true) out.allowClaude = true;
+  // 0.3.0 called it allowClaude.
+  if (r['allowAi'] === true || r['allowClaude'] === true) out.allowAi = true;
   return out;
 }
 

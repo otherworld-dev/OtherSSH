@@ -3,7 +3,7 @@ import type { SessionProfile } from '../../shared/types';
 import type { SessionInfo } from '../session-manager';
 import { createMcpTools, stripAnsi, tail, type McpToolDeps } from './tools';
 
-const web01: SessionProfile = { id: 'p1', name: 'web01', host: 'web01.example.com', user: 'alice', allowClaude: true };
+const web01: SessionProfile = { id: 'p1', name: 'web01', host: 'web01.example.com', user: 'alice', allowAi: true };
 const db01: SessionProfile = { id: 'p2', name: 'db01', host: 'db01.example.com', user: 'alice' };
 
 const tab = (over: Partial<SessionInfo> = {}): SessionInfo => ({
@@ -37,12 +37,12 @@ function setup(over: Partial<McpToolDeps> = {}) {
 }
 
 describe('MCP tools', () => {
-  it('lists saved sessions with their Claude permission', async () => {
+  it('lists saved sessions with their AI permission', async () => {
     const { tools } = setup();
     const list = JSON.parse(await tools.listSessions());
     expect(list).toEqual([
-      { id: 'p1', name: 'web01', host: 'web01.example.com', user: 'alice', allowClaude: true },
-      { id: 'p2', name: 'db01', host: 'db01.example.com', user: 'alice', allowClaude: false },
+      { id: 'p1', name: 'web01', host: 'web01.example.com', user: 'alice', allowAi: true },
+      { id: 'p2', name: 'db01', host: 'db01.example.com', user: 'alice', allowAi: false },
     ]);
   });
 
@@ -63,14 +63,14 @@ describe('MCP tools', () => {
     expect(deps.runCommand).toHaveBeenCalledTimes(2);
   });
 
-  it('refuses every server action on a session without Allow Claude, and logs the refusal', async () => {
+  it('refuses every server action on a session without Allow AI, and logs the refusal', async () => {
     const { tools, deps } = setup();
-    await expect(tools.runCommand('db01', 'uptime')).rejects.toThrow(/not open to Claude/);
-    await expect(tools.openTab('db01')).rejects.toThrow(/not open to Claude/);
-    await expect(tools.uploadFile('db01', ['C:\\x.txt'], '~')).rejects.toThrow(/not open to Claude/);
-    await expect(tools.readTab('s2')).rejects.toThrow(/not open to Claude/);
-    await expect(tools.sendInput('s2', { text: 'ls' })).rejects.toThrow(/not open to Claude/);
-    await expect(tools.closeTab('s2')).rejects.toThrow(/not open to Claude/);
+    await expect(tools.runCommand('db01', 'uptime')).rejects.toThrow(/not open to AI assistants/);
+    await expect(tools.openTab('db01')).rejects.toThrow(/not open to AI assistants/);
+    await expect(tools.uploadFile('db01', ['C:\\x.txt'], '~')).rejects.toThrow(/not open to AI assistants/);
+    await expect(tools.readTab('s2')).rejects.toThrow(/not open to AI assistants/);
+    await expect(tools.sendInput('s2', { text: 'ls' })).rejects.toThrow(/not open to AI assistants/);
+    await expect(tools.closeTab('s2')).rejects.toThrow(/not open to AI assistants/);
     expect(deps.runCommand).not.toHaveBeenCalled();
     expect(deps.openTab).not.toHaveBeenCalled();
     expect(deps.upload).not.toHaveBeenCalled();
@@ -82,10 +82,10 @@ describe('MCP tools', () => {
 
   it('reads permission fresh on each call, so unticking takes effect at once', async () => {
     let allow = true;
-    const { tools } = setup({ profiles: () => [{ ...web01, allowClaude: allow }] });
+    const { tools } = setup({ profiles: () => [{ ...web01, allowAi: allow }] });
     await tools.runCommand('web01', 'uptime');
     allow = false;
-    await expect(tools.runCommand('web01', 'uptime')).rejects.toThrow(/not open to Claude/);
+    await expect(tools.runCommand('web01', 'uptime')).rejects.toThrow(/not open to AI assistants/);
   });
 
   it('refuses one-off connections, which have no saved session to allow', async () => {

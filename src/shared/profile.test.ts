@@ -42,10 +42,18 @@ describe('sanitizeProfile group', () => {
   });
 });
 
-describe('sanitizeProfile allowClaude', () => {
+describe('sanitizeProfile allowAi', () => {
   it('keeps only a real true', () => {
-    expect(sanitizeProfile({ id: '', name: 'n', host: 'h', allowClaude: true }).allowClaude).toBe(true);
-    expect(sanitizeProfile({ id: '', name: 'n', host: 'h', allowClaude: 'yes' } as never).allowClaude).toBeUndefined();
-    expect(sanitizeProfile({ id: '', name: 'n', host: 'h' }).allowClaude).toBeUndefined();
+    expect(sanitizeProfile({ id: '', name: 'n', host: 'h', allowAi: true }).allowAi).toBe(true);
+    expect(sanitizeProfile({ id: '', name: 'n', host: 'h', allowAi: 'yes' } as never).allowAi).toBeUndefined();
+    expect(sanitizeProfile({ id: '', name: 'n', host: 'h' }).allowAi).toBeUndefined();
+  });
+});
+
+describe('sanitizeProfile legacy allowClaude', () => {
+  it('reads the 0.3.0 name as allowAi', () => {
+    const out = sanitizeProfile({ id: '', name: 'n', host: 'h', allowClaude: true } as never);
+    expect(out.allowAi).toBe(true);
+    expect('allowClaude' in out).toBe(false);
   });
 });

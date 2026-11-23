@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { mkdtemp, rm } from 'node:fs/promises';
+import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { SessionStore } from './session-store';
@@ -62,5 +62,22 @@ describe('SessionStore', () => {
     const a = await store.save({ id: '', name: 'A', host: 'a' });
     await store.delete(a.id);
     expect(seen).toEqual([[a], []]);
+  });
+});
+
+describe('SessionStore migration', () => {
+  it('turns the 0.3.0 allowClaude flag into allowAi', async () => {
+    const profiles = [
+      { id: 'a', name: 'web01', host: 'web01', allowClaude: true },
+      { id: 'b', name: 'db01', host: 'db01', allowClaude: false },
+      { id: 'c', name: 'app01', host: 'app01', allowAi: true },
+    ];
+    await writeFile(file, JSON.stringify({ version: 1, profiles }), 'utf8');
+    const store = await fresh();
+    expect(store.list()).toEqual([
+      { id: 'a', name: 'web01', host: 'web01', allowAi: true },
+      { id: 'b', name: 'db01', host: 'db01' },
+      { id: 'c', name: 'app01', host: 'app01', allowAi: true },
+    ]);
   });
 });

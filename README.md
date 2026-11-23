@@ -47,15 +47,17 @@ do in a terminal. No credentials are ever stored by OtherSSH.
   as you, the files wait in `~/.otherssh-upload` and a `sudo mv` is typed into
   the terminal, unsent, for you to finish. Uploads need key or agent login; a
   server that only takes a typed password will refuse them.
-- **Claude can use it (MCP)** — turn on "Let Claude use OtherSSH" in Settings
-  and the running app serves an MCP server on `127.0.0.1` only, behind a random
-  token. Settings has a Copy button for the `claude mcp add` command. Claude can
-  list saved sessions and open tabs, open a session in a new tab you can watch,
-  read a tab's screen, type into it, run a one-off command in the background,
-  upload files and close tabs. It can only do those things on sessions with
-  "Allow Claude" ticked in their settings (off by default), and only with key or
-  agent login. A tab's dot turns orange while Claude is typing into it, and
-  Settings lists what Claude did recently.
+- **AI assistants can use it (MCP)** — turn on "Let AI assistants use OtherSSH"
+  in Settings and the running app serves a Streamable HTTP MCP server on
+  `127.0.0.1` only, behind a random token, so any AI tool that supports remote
+  MCP servers can connect. Settings shows the server URL and token, and copies a
+  JSON server entry or a one-line Claude Code command. The assistant can list
+  saved sessions and open tabs, open a session in a new tab you can watch, read a
+  tab's screen, type into it, run a one-off command in the background, upload
+  files and close tabs. It can only do those things on sessions with "Allow AI
+  assistants" ticked in their settings (off by default), and only with key or
+  agent login. A tab's dot turns amber while an AI is typing into it, and
+  Settings lists what it did recently.
 - **Updates itself** — checks the Otherworld Services feed every few hours and
   installs signed updates quietly when you close it, or while you're away with no
   connections open. Settings has the mode (automatic, ask, or off), a beta

@@ -271,7 +271,7 @@ export function registerIpc(ctx: IpcContext): void {
   });
   on('updates:modal', (event, open: unknown) => windows.setModalOpen(event.sender.id, open === true));
 
-  // ---- MCP (Claude) ---------------------------------------------------------------
+  // ---- MCP (AI assistants) --------------------------------------------------------
   handle('mcp:status', () => ctx.mcp.status());
   handle('mcp:newToken', () => ctx.mcp.newToken());
   on('mcp:reply', (event, requestId: unknown, ok: unknown, value: unknown) => ctx.mcp.reply(event.sender.id, requestId, ok, value));

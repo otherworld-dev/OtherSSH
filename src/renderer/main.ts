@@ -303,7 +303,7 @@ async function boot(): Promise<void> {
     }
   }
 
-  // ---- Claude (MCP) ----------------------------------------------------------
+  // ---- AI assistants (MCP) --------------------------------------------------
 
   async function serveMcp(request: McpRendererRequest): Promise<unknown> {
     switch (request.kind) {
@@ -332,18 +332,18 @@ async function boot(): Promise<void> {
     );
   });
 
-  /** Tabs Claude has typed into lately get a marker, so the user can see who is driving. */
-  const claudeTimers = new Map<string, number>();
+  /** Tabs an AI has typed into lately get a marker, so the user can see who is driving. */
+  const aiTimers = new Map<string, number>();
   api.onMcpActivity((sessionId) => {
     const tab = tabs.bySession(sessionId);
     if (!tab) return;
-    tab.el.classList.add('claude');
-    window.clearTimeout(claudeTimers.get(sessionId));
-    claudeTimers.set(
+    tab.el.classList.add('ai');
+    window.clearTimeout(aiTimers.get(sessionId));
+    aiTimers.set(
       sessionId,
       window.setTimeout(() => {
-        claudeTimers.delete(sessionId);
-        tabs.bySession(sessionId)?.el.classList.remove('claude');
+        aiTimers.delete(sessionId);
+        tabs.bySession(sessionId)?.el.classList.remove('ai');
       }, 5000),
     );
   });
