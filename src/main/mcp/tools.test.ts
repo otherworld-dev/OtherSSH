@@ -130,7 +130,14 @@ describe('MCP tools', () => {
     const { tools } = setup({
       runCommand: vi.fn(async () => ({ code: 255, stdout: '', stderr: 'alice@web01.example.com: Permission denied (publickey,password).' })),
     });
-    await expect(tools.runCommand('web01', 'uptime')).rejects.toThrow(/Couldn't connect/);
+    await expect(tools.runCommand('web01', 'uptime')).rejects.toThrow(/Couldn't log in to "web01" without a password/);
+  });
+
+  it('passes on why ssh could not connect at all', async () => {
+    const { tools } = setup({
+      runCommand: vi.fn(async () => ({ code: 255, stdout: '', stderr: 'ssh: Could not resolve hostname web01.example.com: No such host is known.' })),
+    });
+    await expect(tools.runCommand('web01', 'uptime')).rejects.toThrow(/Couldn't connect: Could not resolve hostname/);
   });
 
   it('opens a tab and returns its id with the first screen', async () => {

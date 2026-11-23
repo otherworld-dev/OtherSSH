@@ -205,7 +205,13 @@ export function createMcpTools(deps: McpToolDeps) {
         const seconds = clamp(timeoutS, LIMITS.defaultTimeoutS, 1, LIMITS.maxTimeoutS);
         const result = await deps.runCommand(profile, command, seconds * 1000);
         // ssh itself exits 255 when it can't connect or log in; the command's own code otherwise.
-        if (result.code === 255 && !result.stdout && /ssh:|Permission denied|Host key/i.test(result.stderr)) {
+        if (result.code === 255 && !result.stdout && /Permission denied \(|No more authentication methods|Too many authentication failures/i.test(result.stderr)) {
+          throw new McpToolError(
+            `Couldn't log in to "${profile.name}" without a password. run_command needs key or agent login; ` +
+              'for a password-only server, use open_tab and let the user type the password.',
+          );
+        }
+        if (result.code === 255 && !result.stdout && /ssh:|Host key/i.test(result.stderr)) {
           throw new McpToolError(`Couldn't connect: ${explainFailure(result.stderr)}`);
         }
         const parts = [result.timedOut ? `Stopped after ${seconds} s (time limit).` : `Exit code ${result.code}.`];
