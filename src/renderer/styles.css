@@ -1,17 +1,26 @@
 :root {
-  /* Otherworld "Other family" palette: night, teal, glow, paper. */
-  --bg: #0a0f16;
-  --bg-panel: #0f1720;
-  --bg-hover: #162230;
-  --bg-active: #1c2c3a;
-  --border: #1c2733;
-  --fg: #f2efe6;
-  --fg-dim: #8a97a3;
-  --accent: #22d3c4;
-  --accent-hover: #5eead4;
-  --on-accent: #0a1118;
-  --danger: #f28b82;
-  --ok: #5eead4;
+  /* Other family palette: Cŵn Annwn slate and chalk neutrals, OtherSSH dragon red accent. */
+  --bg: #1e2124;
+  --bg-panel: #23262b;
+  --bg-hover: #2c3035;
+  --bg-active: #303439;
+  --border: #383c42;
+  --fg: #f4f0e8;
+  --fg-dim: #a8a39a;
+  /* Rings, outlines, focus and indicators: 3:1 or better on every background above. */
+  --accent: #da4d3f;
+  /* Accent as text on dark (drop label): 4.5:1 or better. */
+  --accent-hover: #e5735f;
+  /* Filled primary buttons: chalk text on these is 4.5:1 or better. */
+  --accent-fill: #b3262d;
+  --accent-fill-hover: #c2332f;
+  --on-accent: #f4f0e8;
+  /* Errors can't be told apart from the red accent by hue alone, so they also get an
+     oxblood-tinted panel and a warning marker (see .error and .toast.error). */
+  --danger: #f2b8ac;
+  --danger-edge: #c8553d;
+  --danger-bg: #3a2826;
+  --ok: #6e7f3e;
   --font-ui: system-ui, "Segoe UI", sans-serif;
 }
 
@@ -263,7 +272,7 @@ body.sidebar-collapsed #sidebar {
 
 .tab.activity .dot {
   background: var(--accent);
-  box-shadow: 0 0 0 2px rgba(34, 211, 196, 0.25);
+  box-shadow: 0 0 0 2px rgba(218, 77, 63, 0.3);
 }
 
 .empty code {
@@ -340,7 +349,7 @@ body.sidebar-collapsed #sidebar {
   justify-content: center;
   border: 2px dashed var(--accent);
   border-radius: 6px;
-  background: rgba(10, 15, 22, 0.78);
+  background: rgba(30, 33, 36, 0.85);
   color: var(--accent-hover);
   font: 600 15px var(--font-ui);
   pointer-events: none;
@@ -405,11 +414,20 @@ body.sidebar-collapsed #sidebar {
 }
 
 .toast.info {
-  border-left-color: var(--accent-hover);
+  border-left-color: var(--accent);
 }
 
 .toast.error {
-  border-left-color: var(--danger);
+  border-color: var(--danger-edge);
+  border-left-color: var(--danger-edge);
+  background: var(--danger-bg);
+}
+
+.toast.error .toast-text::before,
+p.error::before {
+  content: "\26A0\FE0E";
+  margin-right: 6px;
+  color: var(--danger);
 }
 
 .toast-text {
@@ -470,7 +488,7 @@ body.sidebar-collapsed #sidebar {
   width: 96px;
   height: auto;
   margin-bottom: 6px;
-  filter: drop-shadow(0 12px 28px rgba(34, 211, 196, 0.12));
+  filter: drop-shadow(0 10px 22px rgba(0, 0, 0, 0.35));
 }
 
 .wordmark {
@@ -517,14 +535,14 @@ button:disabled {
 }
 
 button.primary {
-  background: var(--accent);
+  background: var(--accent-fill);
   border-color: var(--accent);
   color: var(--on-accent);
   font-weight: 600;
 }
 
 button.primary:hover:not(:disabled) {
-  background: var(--accent-hover);
+  background: var(--accent-fill-hover);
   border-color: var(--accent-hover);
 }
 
@@ -623,6 +641,13 @@ dialog h2 {
 .error {
   margin: 4px 0 10px;
   color: var(--danger);
+}
+
+p.error {
+  padding: 4px 8px;
+  border-left: 3px solid var(--danger-edge);
+  border-radius: 3px;
+  background: var(--danger-bg);
 }
 
 dialog h3.section {

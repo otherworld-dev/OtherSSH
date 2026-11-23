@@ -41,27 +41,28 @@ export interface TerminalViewHooks {
 const MIN_FONT = 6;
 const MAX_FONT = 40;
 
+// Slate background and dragon red cursor; the ANSI hues are One Dark's (cyan included, not the brand colour).
 const THEME: ITheme = {
-  background: '#0a0f16',
+  background: '#1e2124',
   foreground: '#e4e2da',
-  cursor: '#22d3c4',
-  cursorAccent: '#0a0f16',
-  selectionBackground: '#1d4a4c',
-  black: '#162230',
+  cursor: '#da4d3f',
+  cursorAccent: '#1e2124',
+  selectionBackground: '#5c3330',
+  black: '#2c3035',
   red: '#e06c75',
   green: '#98c379',
   yellow: '#e5c07b',
   blue: '#61afef',
   magenta: '#c678dd',
-  cyan: '#22d3c4',
+  cyan: '#56b6c2',
   white: '#abb2bf',
-  brightBlack: '#5b6670',
+  brightBlack: '#807b72',
   brightRed: '#e06c75',
   brightGreen: '#98c379',
   brightYellow: '#e5c07b',
   brightBlue: '#61afef',
   brightMagenta: '#c678dd',
-  brightCyan: '#5eead4',
+  brightCyan: '#56b6c2',
   brightWhite: '#ffffff',
 };
 
