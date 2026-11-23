@@ -4,7 +4,7 @@ All notable changes to OtherSSH are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project uses
 [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [0.3.0] - 2026-11-23
 
 ### Added
 - Claude can use OtherSSH through MCP. Turn it on in Settings ("Let Claude use OtherSSH"); the
@@ -12,7 +12,8 @@ All notable changes to OtherSSH are documented here. The format is based on
   `claude mcp add` command for you. Claude can list saved sessions and open tabs, open a tab you
   can watch, read a tab's screen, type into it, run a background command, upload files and close
   tabs, but only on sessions with the new "Allow Claude" box ticked. A tab's dot turns orange
-  while Claude types into it, and Settings lists Claude's recent actions.
+  while Claude types into it, and Settings lists Claude's recent actions. "How to connect Claude" in
+  Settings walks through it.
 
 ## [0.2.0] - 2026-11-11
 
@@ -34,4 +35,5 @@ All notable changes to OtherSSH are documented here. The format is based on
 - SSHIT is now called OtherSSH, with a new icon and the Otherworld colours. Saved sessions and
   settings are carried over on first start.
 
+[0.3.0]: https://github.com/otherworld-dev/OtherSSH/releases/tag/v0.3.0
 [0.2.0]: https://github.com/otherworld-dev/OtherSSH/releases/tag/v0.2.0
