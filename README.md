@@ -54,7 +54,7 @@ do in a terminal. No credentials are ever stored by OtherSSH.
   read a tab's screen, type into it, run a one-off command in the background,
   upload files and close tabs. It can only do those things on sessions with
   "Allow Claude" ticked in their settings (off by default), and only with key or
-  agent login. A tab's dot turns orange while Claude is typing into it, and
+  agent login. A tab's dot turns amber while Claude is typing into it, and
   Settings lists what Claude did recently.
 - **Updates itself** — checks the Otherworld Services feed every few hours and
   installs signed updates quietly when you close it, or while you're away with no

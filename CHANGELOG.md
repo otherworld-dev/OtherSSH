@@ -10,7 +10,8 @@ All notable changes to OtherSSH are documented here. The format is based on
 - New look for the Other family: the dragon red OtherSSH icon, and slate, chalk and red in place of
   the old teal and navy, in the window, the terminal's background, cursor and selection, and the
   Gwyn empty state. Errors now sit on a tinted panel with a warning sign, so they don't read as
-  ordinary red accents.
+  ordinary red accents. The dot on a tab Claude is typing into is now amber, to stand apart from the
+  red activity dot.
 
 ## [0.3.0] - 2026-11-23
 
