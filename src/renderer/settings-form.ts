@@ -14,18 +14,18 @@ export interface McpControls {
   copy(text: string): void;
 }
 
-/** The same server as an entry for .mcp.json or another MCP client. */
+export function mcpUrl(port: number): string {
+  return `http://127.0.0.1:${port}/mcp`;
+}
+
+/** The server as an entry for any MCP client that takes an mcpServers JSON config. */
 export function mcpJsonEntry(port: number, token: string): string {
-  return JSON.stringify(
-    { otherssh: { type: 'http', url: `http://127.0.0.1:${port}/mcp`, headers: { Authorization: `Bearer ${token}` } } },
-    null,
-    2,
-  );
+  return JSON.stringify({ otherssh: { type: 'http', url: mcpUrl(port), headers: { Authorization: `Bearer ${token}` } } }, null, 2);
 }
 
 /** The one-off command that adds OtherSSH to Claude Code, for every project. */
 export function claudeAddCommand(port: number, token: string): string {
-  return `claude mcp add --transport http --scope user otherssh http://127.0.0.1:${port}/mcp --header "Authorization: Bearer ${token}"`;
+  return `claude mcp add --transport http --scope user otherssh ${mcpUrl(port)} --header "Authorization: Bearer ${token}"`;
 }
 
 export class SettingsForm {
@@ -39,23 +39,24 @@ export class SettingsForm {
     private readonly mcp: McpControls,
   ) {
     mcp.onStatus((status) => this.showMcp(status));
-    this.q('#st-mcp-copy').addEventListener('click', () => {
-      const command = this.mcpCommand();
-      if (!command) return;
-      mcp.copy(command);
-      this.q('#st-mcp-copy').textContent = 'Copied';
-      window.setTimeout(() => (this.q('#st-mcp-copy').textContent = 'Copy'), 1500);
-    });
-    this.q('#st-mcp-json').addEventListener('click', () => {
-      const s = this.current;
-      if (!s?.mcpToken) return;
-      mcp.copy(mcpJsonEntry(s.mcpPort, s.mcpToken));
-      this.q('#st-mcp-json').textContent = 'Copied';
-      window.setTimeout(() => (this.q('#st-mcp-json').textContent = 'JSON'), 1500);
-    });
+    const copyButton = (id: string, text: (port: number, token: string) => string): void => {
+      const button = this.q<HTMLButtonElement>(id);
+      const label = button.textContent ?? 'Copy';
+      button.addEventListener('click', () => {
+        const s = this.current;
+        if (!s?.mcpToken) return;
+        mcp.copy(text(s.mcpPort, s.mcpToken));
+        button.textContent = 'Copied';
+        window.setTimeout(() => (button.textContent = label), 1500);
+      });
+    };
+    copyButton('#st-mcp-url-copy', (port) => mcpUrl(port));
+    copyButton('#st-mcp-token-copy', (_port, token) => token);
+    copyButton('#st-mcp-json', mcpJsonEntry);
+    copyButton('#st-mcp-copy', claudeAddCommand);
     this.q('#st-mcp-token').addEventListener('click', async () => {
       this.current = await mcp.newToken();
-      this.showCommand();
+      this.showConnection();
     });
     updates.onStatus((status) => this.showStatus(status));
     this.q('#st-update-check').addEventListener('click', () => void updates.check());
@@ -96,7 +97,7 @@ export class SettingsForm {
     this.current = settings;
     this.q<HTMLInputElement>('#st-mcp-enabled').checked = settings.mcpEnabled;
     this.field('st-mcp-port').value = String(settings.mcpPort);
-    this.showCommand();
+    this.showConnection();
     void this.mcp.status().then((status) => this.showMcp(status));
     this.dialog.showModal();
     return new Promise((resolve) => {
@@ -127,17 +128,15 @@ export class SettingsForm {
     this.q('#st-update-install').hidden = !(status.ready && status.canInstall);
   }
 
-  private mcpCommand(): string | null {
+  /** URL and token as saved; the token is shown cut short, and only copied whole. */
+  private showConnection(): void {
     const s = this.current;
-    return s?.mcpToken ? claudeAddCommand(s.mcpPort, s.mcpToken) : null;
-  }
-
-  private showCommand(): void {
-    const command = this.mcpCommand();
-    this.q('#st-mcp-command').textContent = command ?? 'Turn it on and save to get the command.';
-    this.q<HTMLButtonElement>('#st-mcp-copy').disabled = !command;
-    this.q<HTMLButtonElement>('#st-mcp-token').disabled = !command;
-    this.q<HTMLButtonElement>('#st-mcp-json').disabled = !command;
+    const token = s?.mcpToken;
+    this.q('#st-mcp-url').textContent = s ? mcpUrl(s.mcpPort) : '';
+    this.q('#st-mcp-token-text').textContent = token ? `${token.slice(0, 6)}…` : 'Turn it on and save to make one.';
+    for (const id of ['#st-mcp-url-copy', '#st-mcp-token-copy', '#st-mcp-token', '#st-mcp-json', '#st-mcp-copy']) {
+      this.q<HTMLButtonElement>(id).disabled = !token;
+    }
   }
 
   private showMcp(status: McpStatus): void {

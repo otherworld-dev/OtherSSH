@@ -13,8 +13,8 @@ export interface SessionProfile {
   extraArgs?: string[];
   /** Sidebar group name. Flat, free text; blank means ungrouped. */
   group?: string;
-  /** Claude (through the MCP server) may open, read, type into, run commands on and upload to this session. */
-  allowClaude?: boolean;
+  /** AI assistants (through the MCP server) may open, read, type into, run commands on and upload to this session. */
+  allowAi?: boolean;
 }
 
 export interface Settings {
@@ -26,11 +26,11 @@ export interface Settings {
   /** What happens once an update has downloaded: install by itself, offer it, or never check. */
   updateMode: UpdateMode;
   updateChannel: UpdateChannel;
-  /** Run the local MCP server so Claude can use the open app. */
+  /** Run the local MCP server so AI assistants can use the open app. */
   mcpEnabled: boolean;
   /** Port the MCP server listens on, on 127.0.0.1 only. */
   mcpPort: number;
-  /** Bearer token Claude must send; main creates it the first time the server is turned on. */
+  /** Bearer token MCP clients must send; main creates it the first time the server is turned on. */
   mcpToken?: string;
 }
 
@@ -43,7 +43,7 @@ export interface McpStatus {
   recent: McpAction[];
 }
 
-/** One thing Claude did (or tried to do), for the activity list in Settings. */
+/** One thing an AI assistant did (or tried to do), for the activity list in Settings. */
 export interface McpAction {
   at: number;
   tool: string;
@@ -53,7 +53,7 @@ export interface McpAction {
   detail?: string;
 }
 
-/** A request main makes of a window on Claude's behalf. */
+/** A request main makes of a window on an AI assistant's behalf. */
 export type McpRendererRequest =
   | { kind: 'open'; profileId: string }
   | { kind: 'read'; sessionId: string; lines: number }
@@ -222,14 +222,14 @@ export interface OtherSshApi {
   onUpdateStatus(cb: (status: UpdateStatus) => void): () => void;
   onUpdateNotice(cb: (notice: UpdateNotice) => void): () => void;
 
-  // MCP (Claude)
+  // MCP (AI assistants)
   getMcpStatus(): Promise<McpStatus>;
-  /** Replace the MCP token; returns the new settings. Claude must then be given the new command. */
+  /** Replace the MCP token; returns the new settings. clients must then be given the new token. */
   newMcpToken(): Promise<Settings>;
   onMcpStatus(cb: (status: McpStatus) => void): () => void;
-  /** Claude typed into this session: mark its tab for a moment. */
+  /** An AI typed into this session: mark its tab for a moment. */
   onMcpActivity(cb: (sessionId: string) => void): () => void;
-  /** Main asks this window to do something for Claude; answer with replyMcp. */
+  /** Main asks this window to do something for an AI assistant; answer with replyMcp. */
   onMcpRequest(cb: (requestId: number, request: McpRendererRequest) => void): () => void;
   replyMcp(requestId: number, ok: boolean, value: unknown): void;
 }

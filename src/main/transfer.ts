@@ -216,7 +216,7 @@ export function createTransfers(deps: TransferDeps) {
     throw new Error('The server did not confirm the change.');
   };
 
-  /** One command on the server, no terminal, no stdin; for Claude's run_command. Never throws for a non-zero exit. */
+  /** One command on the server, no terminal, no stdin; for the MCP run_command. Never throws for a non-zero exit. */
   const command = (profile: SessionProfile, cmd: string, timeoutMs: number): Promise<RunResult> =>
     tracked(async () => deps.run(tool('ssh'), sshExecArgs(profile, cmd), '', timeoutMs));
 

@@ -31,7 +31,7 @@ const MAX_RECENT = 50;
 
 export const newToken = (): string => randomBytes(24).toString('base64url');
 
-/** Runs the MCP server while Settings has it on, and does Claude's tab work through the windows. */
+/** Runs the MCP server while Settings has it on, and does the AI's tab work through the windows. */
 export function createMcpController(deps: McpControllerDeps) {
   const pending = new Map<number, Pending>();
   let nextRequest = 1;

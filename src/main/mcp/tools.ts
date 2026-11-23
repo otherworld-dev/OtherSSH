@@ -3,9 +3,9 @@ import type { SessionInfo } from '../session-manager';
 import type { RunResult } from '../transfer';
 import { explainFailure } from '../transfer';
 
-// What Claude can do through the MCP server, with no Electron in sight so it can
+// What an AI assistant can do through the MCP server, with no Electron in sight so it can
 // be tested. Everything that touches a server is gated on the saved session's
-// "Allow Claude" box, read fresh on every call so unticking it takes effect at once.
+// "Allow AI" box, read fresh on every call so unticking it takes effect at once.
 
 export interface McpToolDeps {
   /** Saved sessions, as they are now. */
@@ -27,7 +27,7 @@ export interface McpToolDeps {
   sleep(ms: number): Promise<void>;
 }
 
-/** A refusal or bad input Claude should see as the tool's error text. */
+/** A refusal or bad input the AI should see as the tool's error text. */
 export class McpToolError extends Error {}
 
 export const KEYS = {
@@ -88,18 +88,18 @@ export function createMcpTools(deps: McpToolDeps) {
   };
 
   const requireAllowed = (profile: SessionProfile): SessionProfile => {
-    if (!profile.allowClaude) {
-      throw new McpToolError(`"${profile.name}" is not open to Claude. Tick "Allow Claude" in that session's settings in OtherSSH.`);
+    if (!profile.allowAi) {
+      throw new McpToolError(`"${profile.name}" is not open to AI assistants. Tick "Allow AI assistants to use this session" in its settings in OtherSSH.`);
     }
     return profile;
   };
 
-  /** An open tab, and its saved session, which must allow Claude. */
+  /** An open tab, and its saved session, which must allow AI. */
   const findTab = (tabId: string): { info: SessionInfo; profile: SessionProfile } => {
     const info = deps.sessions().find((s) => s.sessionId === tabId);
     if (!info) throw new McpToolError(`No open tab "${tabId}". Call list_tabs to see them.`);
     const profile = deps.profiles().find((p) => p.id === info.profileId);
-    if (!profile) throw new McpToolError(`Tab "${info.title}" is a one-off connection, not a saved session, so Claude can't use it.`);
+    if (!profile) throw new McpToolError(`Tab "${info.title}" is a one-off connection, not a saved session, so it can't be used over MCP.`);
     return { info, profile: requireAllowed(profile) };
   };
 
@@ -129,7 +129,7 @@ export function createMcpTools(deps: McpToolDeps) {
     ...(p.user ? { user: p.user } : {}),
     ...(p.port ? { port: p.port } : {}),
     ...(p.group ? { group: p.group } : {}),
-    allowClaude: p.allowClaude === true,
+    allowAi: p.allowAi === true,
   });
 
   const screenAfter = async (sessionId: string, waitMs: number): Promise<string> => {
@@ -151,7 +151,7 @@ export function createMcpTools(deps: McpToolDeps) {
           sessionId: s.profileId || null,
           connected: s.alive,
           ...(s.alive || s.exitCode === undefined ? {} : { exitCode: s.exitCode }),
-          allowClaude: profiles.get(s.profileId)?.allowClaude === true,
+          allowAi: profiles.get(s.profileId)?.allowAi === true,
         }));
         return JSON.stringify(tabs, null, 2);
       }),

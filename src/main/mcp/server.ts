@@ -26,7 +26,7 @@ export interface McpServerOptions {
 
 const INSTRUCTIONS = `OtherSSH is the user's SSH client on Windows. These tools work on the running app.
 - list_sessions shows saved sessions; list_tabs shows the tabs open right now.
-- Only sessions the user has ticked "Allow Claude" on can be opened, read, typed into, run on or uploaded to.
+- Only sessions the user has ticked "Allow AI assistants" on can be opened, read, typed into, run on or uploaded to.
 - Prefer run_command for a one-off command whose output you need: it runs in the background, separately from any tab, and returns the exit code.
 - Use open_tab, send_input and read_tab to work in a terminal the user can watch, or for interactive programs.
 - Never type passwords or sudo passwords. If something needs one, stop and ask the user to do that step.`;
@@ -37,7 +37,7 @@ function text(body: string) {
   return { content: [{ type: 'text' as const, text: body }] };
 }
 
-/** Run a tool and turn its refusals into an error result Claude can read, rather than a protocol error. */
+/** Run a tool and turn its refusals into an error result the AI can read, rather than a protocol error. */
 async function result(work: () => Promise<string>) {
   try {
     return text(await work());
@@ -53,7 +53,7 @@ export function buildMcpServer(tools: McpTools, version: string): McpServer {
 
   server.registerTool(
     'list_sessions',
-    { description: 'List the saved SSH sessions in OtherSSH, and whether each allows Claude.', annotations: { readOnlyHint: true } },
+    { description: 'List the saved SSH sessions in OtherSSH, and whether each allows AI assistants.', annotations: { readOnlyHint: true } },
     () => result(() => tools.listSessions()),
   );
 

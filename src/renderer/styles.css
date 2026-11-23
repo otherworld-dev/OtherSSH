@@ -711,6 +711,11 @@ select {
   margin-bottom: 4px;
 }
 
+.mcp-help ul {
+  margin: 4px 0 0;
+  padding-left: 16px;
+}
+
 .mcp-help p {
   margin: 6px 0;
 }
@@ -754,8 +759,8 @@ select {
   margin-right: 6px;
 }
 
-/* Claude typed into this tab in the last few seconds. Amber, so it can't be mistaken for the red activity dot. */
-.tab.claude .dot {
+/* An AI typed into this tab in the last few seconds. Amber, so it can't be mistaken for the red activity dot. */
+.tab.ai .dot {
   background: #e8b04a;
   box-shadow: 0 0 0 2px rgba(232, 176, 74, 0.35);
 }

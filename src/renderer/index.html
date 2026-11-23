@@ -67,8 +67,8 @@
           <button type="button" id="pf-browse">Browse&hellip;</button>
         </div>
         <label class="field"><span>Extra args</span><input id="pf-extra" type="text" placeholder="e.g. -o ServerAliveInterval=30" spellcheck="false" /></label>
-        <label class="field check" title="Claude can open this session, read its screen, type into it, run commands and upload files. Needs Claude turned on in Settings, and key or agent login."
-          ><span>Claude</span><span><input id="pf-claude" type="checkbox" /> Allow Claude to use this session</span></label
+        <label class="field check" title="AI assistants connected over MCP can open this session, read its screen, type into it, run commands and upload files. Needs the MCP server turned on in Settings, and key or agent login."
+          ><span>AI</span><span><input id="pf-ai" type="checkbox" /> Allow AI assistants to use this session</span></label
         >
         <p id="pf-error" class="error" hidden></p>
         <div class="actions">
@@ -119,42 +119,58 @@
             <button type="button" id="st-update-install" class="primary" hidden>Restart now</button>
           </span>
         </div>
-        <h3 class="section">Claude</h3>
+        <h3 class="section">AI assistants (MCP)</h3>
         <label class="field check"
-          ><span>MCP server</span><span><input id="st-mcp-enabled" type="checkbox" /> Let Claude use OtherSSH (this PC only)</span></label
+          ><span>MCP server</span><span><input id="st-mcp-enabled" type="checkbox" /> Let AI assistants use OtherSSH (this PC only)</span></label
         >
         <label class="field"><span>Port</span><input id="st-mcp-port" type="number" min="1024" max="65535" /></label>
         <div class="field"><span>Status</span><span id="st-mcp-status" class="update-status"></span></div>
-        <div class="field mcp-command">
-          <span>Add to Claude</span>
-          <code id="st-mcp-command" class="resolved" title="Run this once in a terminal to add OtherSSH to Claude Code"></code>
+        <div class="field">
+          <span>Server URL</span>
+          <code id="st-mcp-url" class="resolved"></code>
+          <span class="update-actions"><button type="button" id="st-mcp-url-copy">Copy</button></span>
+        </div>
+        <div class="field">
+          <span>Token</span>
+          <code id="st-mcp-token-text" class="resolved" title="Sent as the header Authorization: Bearer &lt;token&gt;"></code>
           <span class="update-actions">
-            <button type="button" id="st-mcp-copy" title="Copy the Claude Code command">Copy</button>
-            <button type="button" id="st-mcp-json" title="Copy the server entry as JSON, for .mcp.json or another MCP client">JSON</button>
-            <button type="button" id="st-mcp-token" title="Make a new token; Claude must be added again with the new command">New token</button>
+            <button type="button" id="st-mcp-token-copy">Copy</button>
+            <button type="button" id="st-mcp-token" title="Make a new token; every connected AI tool then needs the new one">New</button>
           </span>
         </div>
-        <p class="hint-small">Claude can only touch sessions with "Allow Claude" ticked in their settings.</p>
+        <div class="field">
+          <span>Set up</span>
+          <span class="update-actions">
+            <button type="button" id="st-mcp-json" title="A server entry for tools that take an mcpServers JSON config">Copy JSON config</button>
+            <button type="button" id="st-mcp-copy" title="A one-line command that adds OtherSSH to Claude Code">Copy Claude Code command</button>
+          </span>
+          <span></span>
+        </div>
+        <p class="hint-small">AI assistants can only touch sessions with "Allow AI assistants" ticked in their settings.</p>
         <details class="mcp-help">
-          <summary>How to connect Claude</summary>
+          <summary>How to connect an AI assistant</summary>
           <ol>
-            <li>Tick <b>Let Claude use OtherSSH</b> and press <b>Save</b>. Status should say "Listening on http://127.0.0.1:…/mcp".</li>
+            <li>Tick <b>Let AI assistants use OtherSSH</b> and press <b>Save</b>. Status should say "Listening on http://127.0.0.1:…/mcp".</li>
             <li>
-              Open Settings again, press <b>Copy</b> and run the command once in a terminal (PowerShell, cmd or bash). It adds
-              OtherSSH to Claude Code for all your projects. <code>claude mcp list</code> should then show <code>otherssh</code> as connected.
+              Open Settings again and add OtherSSH to your AI tool as an MCP server. It is a Streamable HTTP server, so any tool that
+              supports remote (HTTP) MCP servers can use it:
+              <ul>
+                <li>Give the tool the <b>Server URL</b> and the header <code>Authorization: Bearer &lt;token&gt;</code>, using the <b>Token</b> above.</li>
+                <li>If the tool takes a JSON list of servers (an <code>mcpServers</code> file), press <b>Copy JSON config</b> and paste the entry in.</li>
+                <li>For Claude Code, press <b>Copy Claude Code command</b> and run it once in a terminal.</li>
+              </ul>
             </li>
-            <li>Edit each session Claude may use and tick <b>Allow Claude to use this session</b>. Those need key or agent login.</li>
-            <li>Leave OtherSSH open and ask Claude, for example: "Use OtherSSH to check disk space on web01."</li>
+            <li>Edit each session the AI may use and tick <b>Allow AI assistants to use this session</b>. Those need key or agent login.</li>
+            <li>Leave OtherSSH open and ask your assistant, for example: "Use OtherSSH to check disk space on web01."</li>
           </ol>
           <p>
-            Claude can list sessions and tabs, open a tab you can watch, read and type into it, run a command in the background,
-            upload files and close tabs. A tab's dot turns amber while Claude is typing into it, and <b>Recent</b> below lists
-            what it did.
+            The assistant can list sessions and tabs, open a tab you can watch, read and type into it, run a command in the
+            background, upload files and close tabs. A tab's dot turns amber while an AI is typing into it, and <b>Recent</b>
+            below lists what it did.
           </p>
           <p>
-            After <b>New token</b> or a port change, run <code>claude mcp remove otherssh -s user</code>, then the new copied
-            command. For another MCP client, press <b>JSON</b>: it is a Streamable HTTP server that needs the
-            <code>Authorization</code> header shown there. It only answers on this PC.
+            After <b>New</b> token or a port change, update the server in your AI tool too. The server only answers on this PC.
+            A tool that can only start local (stdio) MCP servers needs an HTTP bridge in between.
           </p>
         </details>
         <div class="field mcp-recent-field"><span>Recent</span><ul id="st-mcp-recent" class="mcp-recent"></ul></div>
